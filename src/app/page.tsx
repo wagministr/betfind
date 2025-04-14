@@ -1,8 +1,15 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
 import { supabase } from '@/utils/supabase';
 
 export default function Home() {
+  const [loading, setLoading] = useState(false);
+
   const fetchData = async () => {
     try {
+      setLoading(true);
       // Example query - replace with your table name
       const { data, error } = await supabase.from('your_table').select('*').limit(5);
       
@@ -14,22 +21,43 @@ export default function Home() {
       console.log('Data from Supabase:', data);
     } catch (error) {
       console.error('Unexpected error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
+        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
           BetFind with Supabase Integration
         </p>
         <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
           <button
             onClick={fetchData}
+            disabled={loading}
             className="flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
           >
-            Test Supabase Connection
+            {loading ? "Testing..." : "Test Supabase Connection"}
           </button>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center justify-center">
+        <h1 className="text-4xl font-bold mb-6">Welcome to BetFind</h1>
+        <div className="flex space-x-4">
+          <Link 
+            href="/auth" 
+            className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition duration-200"
+          >
+            Sign In / Register
+          </Link>
+          <Link
+            href="/dashboard"
+            className="bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-md transition duration-200"
+          >
+            Go to Dashboard
+          </Link>
         </div>
       </div>
 
