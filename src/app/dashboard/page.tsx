@@ -14,33 +14,28 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        router.push("/auth");
-        return;
+    const getUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user || null);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      } finally {
+        setLoading(false);
       }
-      
-      setUser(session.user);
-      setLoading(false);
     };
 
-    checkUser();
+    getUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        router.push("/auth");
-        return;
-      }
-      
       setUser(session?.user || null);
+      // If user signs out, they'll be redirected by the middleware
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [router]);
+  }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();

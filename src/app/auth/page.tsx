@@ -14,9 +14,15 @@ export default function AuthPage() {
   useEffect(() => {
     // Check current auth status
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
-      setIsAuthenticated(!!data.session);
-      setLoading(false);
+      try {
+        const { data } = await supabase.auth.getSession();
+        setIsAuthenticated(!!data.session);
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
     };
 
     checkAuth();
@@ -24,6 +30,7 @@ export default function AuthPage() {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
+      // If authenticated, they'll be redirected by middleware
     });
 
     return () => {
@@ -32,7 +39,7 @@ export default function AuthPage() {
   }, []);
 
   const handleAuthSuccess = () => {
-    router.push("/dashboard"); // Redirect to dashboard or home page after successful auth
+    router.push("/dashboard"); // Redirect to dashboard after successful auth
   };
 
   const handleSignOut = async () => {
