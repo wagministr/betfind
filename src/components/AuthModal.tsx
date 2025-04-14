@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { supabase } from "@/utils/supabase"
+import { logUserLogin, getUserDomain } from "@/utils/userSegmentation"
 
 export default function AuthModal({ onSuccess }: { onSuccess: () => void }) {
   const [email, setEmail] = useState("")
@@ -7,6 +8,7 @@ export default function AuthModal({ onSuccess }: { onSuccess: () => void }) {
   const [otp, setOtp] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [userDomain, setUserDomain] = useState<string | null>(null)
 
   const sendOtp = async () => {
     if (!email || !email.includes('@')) {
@@ -16,6 +18,12 @@ export default function AuthModal({ onSuccess }: { onSuccess: () => void }) {
     
     setError(null)
     setLoading(true)
+    
+    // Store the domain for segmentation
+    const domain = getUserDomain(email)
+    setUserDomain(domain)
+    console.log(`User domain detected: ${domain}`)
+    
     const { error } = await supabase.auth.signInWithOtp({ email })
     setLoading(false)
     
@@ -45,6 +53,16 @@ export default function AuthModal({ onSuccess }: { onSuccess: () => void }) {
     if (error) {
       setError(error.message)
       return
+    }
+    
+    // Log the successful login for analytics/segmentation
+    if (data.user) {
+      try {
+        await logUserLogin(data.user.id, email)
+        console.log(`Login recorded for user domain: ${userDomain}`)
+      } catch (err) {
+        console.error("Failed to log user login for analytics", err)
+      }
     }
     
     onSuccess()
