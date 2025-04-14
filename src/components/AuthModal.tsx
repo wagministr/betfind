@@ -24,7 +24,15 @@ export default function AuthModal({ onSuccess }: { onSuccess: () => void }) {
     setUserDomain(domain)
     console.log(`User domain detected: ${domain}`)
     
-    const { error } = await supabase.auth.signInWithOtp({ email })
+    // Request OTP code instead of magic link
+    const { error } = await supabase.auth.signInWithOtp({ 
+      email,
+      options: {
+        shouldCreateUser: true,
+        // Force OTP code by setting this to undefined, not null
+        emailRedirectTo: undefined
+      }
+    })
     setLoading(false)
     
     if (error) {
@@ -46,7 +54,7 @@ export default function AuthModal({ onSuccess }: { onSuccess: () => void }) {
     const { data, error } = await supabase.auth.verifyOtp({
       email,
       token: otp,
-      type: "magiclink", // or "email" for code
+      type: "email", // Use "email" for OTP code instead of "magiclink"
     })
     setLoading(false)
     
@@ -98,14 +106,17 @@ export default function AuthModal({ onSuccess }: { onSuccess: () => void }) {
         <>
           <h2 className="text-xl font-bold mb-4 dark:text-white">Check your email</h2>
           <p className="mb-4 text-gray-600 dark:text-gray-300">
-            We've sent a verification code to {email}
+            We've sent a 6-digit code to {email}
           </p>
           <input
             type="text"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
             className="w-full border border-gray-300 dark:border-gray-600 px-4 py-2 rounded-md mb-4 dark:bg-gray-700 dark:text-white"
-            placeholder="Enter verification code"
+            placeholder="Enter 6-digit code"
+            maxLength={6}
+            pattern="[0-9]*"
+            inputMode="numeric"
           />
           <button
             onClick={verifyOtp}
