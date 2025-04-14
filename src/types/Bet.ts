@@ -1,14 +1,13 @@
-// Types for the application
-
+// Bet type for storing bet information
 export interface Bet {
-  matchId: string;
+  id: string;
   match: string;
   league: string;
-  bet: string;
+  betType: string;
   odds: number;
   confidence: number;
   valueIndex: number;
-  reasoning: string;
+  aiAnalysis: string;
   time: string;
   date: string;
 } 

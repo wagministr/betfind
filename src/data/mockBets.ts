@@ -1,71 +1,126 @@
 // data/mockBets.ts
 import { Bet } from "@/types";
 
+// Sample mock data for the ValueBetsTable component
 export const mockBets: Bet[] = [
   {
-    matchId: "001",
-    match: "Liverpool vs Man City",
+    matchId: "1",
+    match: "Manchester United vs Liverpool",
     league: "Premier League",
-    bet: "Liverpool to win",
-    odds: 2.1,
-    confidence: 0.74,
-    valueIndex: 1.55,
-    reasoning:
-      "Liverpool has won 5 of their last 6 home matches. Man City will be missing their key defender due to injury, which weakens their back line significantly.",
+    bet: "Home Win",
+    odds: 2.5,
+    confidence: 0.75,
+    valueIndex: 1.5,
+    reasoning: "Liverpool has been struggling defensively in away games this season, while Manchester United has shown strong offensive performance at home. Historical head-to-head data suggests United performs well as underdogs in this matchup.",
+    time: "Today 15:00",
+    date: new Date().toISOString()
   },
   {
-    matchId: "002",
-    match: "Barcelona vs Real Madrid",
+    matchId: "2",
+    match: "Real Madrid vs Barcelona",
     league: "La Liga",
-    bet: "Both teams to score",
+    bet: "Over 2.5 Goals",
     odds: 1.85,
-    confidence: 0.71,
-    valueIndex: 1.31,
-    reasoning:
-      "Both teams have scored in 7 of their last 8 meetings. Barcelona's defense has been shaky lately, especially against top-tier teams.",
+    confidence: 0.82,
+    valueIndex: 2.0,
+    reasoning: "El Clásico matches have averaged 3.2 goals per game over the last 10 encounters. Both teams are in strong scoring form, with key attacking players available for both sides.",
+    time: "Today 20:00",
+    date: new Date().toISOString()
   },
   {
-    matchId: "003",
-    match: "Juventus vs AC Milan",
-    league: "Serie A",
-    bet: "Under 2.5 goals",
-    odds: 1.95,
-    confidence: 0.68,
-    valueIndex: 1.33,
-    reasoning:
-      "Both sides play defensively in high-stakes games. 4 of the last 5 matchups between them have had under 2.5 goals.",
-  },
-  {
-    matchId: "004",
-    match: "PSG vs Lyon",
-    league: "Ligue 1",
-    bet: "PSG to win by 2+ goals",
-    odds: 2.4,
-    confidence: 0.63,
-    valueIndex: 1.51,
-    reasoning:
-      "PSG are dominant at home and in excellent form. Lyon has lost 3 consecutive away games by 2 or more goals.",
-  },
-  {
-    matchId: "005",
+    matchId: "3",
     match: "Bayern Munich vs Borussia Dortmund",
     league: "Bundesliga",
-    bet: "Over 3.5 goals",
-    odds: 2.0,
-    confidence: 0.69,
-    valueIndex: 1.38,
-    reasoning:
-      "This fixture historically produces high-scoring matches. Both teams are in attacking form, averaging over 2 goals per game.",
+    bet: "Both Teams to Score",
+    odds: 1.65,
+    confidence: 0.88,
+    valueIndex: 1.8,
+    reasoning: "Der Klassiker consistently delivers goals from both sides. The last 8 matches between these teams have seen both teams scoring. Bayern's high defensive line creates opportunities for Dortmund's quick attackers.",
+    time: "Tomorrow 18:30",
+    date: new Date(Date.now() + 86400000).toISOString()
   },
   {
-    matchId: "006",
-    match: "Chelsea vs Arsenal",
-    league: "Premier League",
-    bet: "Arsenal to win or draw",
-    odds: 1.75,
-    confidence: 0.72,
-    valueIndex: 1.26,
-    reasoning:
-      "Arsenal has not lost to Chelsea in their last 5 encounters. Their midfield dominance gives them a clear edge.",
+    matchId: "4",
+    match: "Juventus vs Inter Milan",
+    league: "Serie A",
+    bet: "Draw",
+    odds: 3.2,
+    confidence: 0.65,
+    valueIndex: 2.5,
+    reasoning: "Derby d'Italia matches are typically tight affairs. 4 of the last 7 encounters ended in draws. Both teams have strong defenses and are likely to adopt cautious approaches.",
+    time: "Tomorrow 20:45",
+    date: new Date(Date.now() + 86400000).toISOString()
   },
-] 
+  {
+    matchId: "5",
+    match: "PSG vs Marseille",
+    league: "Ligue 1",
+    bet: "PSG -1.5",
+    odds: 2.1,
+    confidence: 0.70,
+    valueIndex: 1.2,
+    reasoning: "Le Classique has been dominated by PSG in recent years, winning by 2+ goals in 5 of the last 7 home matches against Marseille. PSG's attacking talent should create multiple scoring opportunities.",
+    time: "Tomorrow 21:00",
+    date: new Date(Date.now() + 86400000).toISOString()
+  },
+  {
+    matchId: "6",
+    match: "Ajax vs Feyenoord",
+    league: "Eredivisie",
+    bet: "Over 3.5 Goals",
+    odds: 2.4,
+    confidence: 0.72,
+    valueIndex: 1.6,
+    reasoning: "De Klassieker tends to be high-scoring, with 4+ goals in 6 of the last 8 matches between these rivals. Both teams favor attacking styles over defensive solidity.",
+    time: "Sunday 14:30",
+    date: new Date(Date.now() + 172800000).toISOString()
+  },
+  {
+    matchId: "7",
+    match: "Arsenal vs Tottenham",
+    league: "Premier League",
+    bet: "Arsenal Win",
+    odds: 1.95,
+    confidence: 0.78,
+    valueIndex: 2.2,
+    reasoning: "The North London derby has favored home teams historically. Arsenal's improved defensive organization and Tottenham's inconsistent away form suggest value in backing the Gunners.",
+    time: "Sunday 16:30",
+    date: new Date(Date.now() + 172800000).toISOString()
+  },
+  {
+    matchId: "8",
+    match: "AC Milan vs AS Roma",
+    league: "Serie A", 
+    bet: "Under 2.5 Goals",
+    odds: 1.75,
+    confidence: 0.80,
+    valueIndex: 1.4,
+    reasoning: "These matches have tended to be low-scoring in recent seasons, with 6 of the last 8 encounters seeing fewer than 3 goals. Both teams have solid defensive structures.",
+    time: "Sunday 18:00",
+    date: new Date(Date.now() + 172800000).toISOString()
+  },
+  {
+    matchId: "9",
+    match: "Celtic vs Rangers",
+    league: "Scottish Premiership",
+    bet: "Celtic -1",
+    odds: 2.25,
+    confidence: 0.68,
+    valueIndex: 1.3,
+    reasoning: "The Old Firm derby has been dominated by Celtic at home in recent seasons. Rangers' defensive vulnerabilities against high-pressing teams suggest Celtic can win by a margin.",
+    time: "Sunday 12:00",
+    date: new Date(Date.now() + 172800000).toISOString()
+  },
+  {
+    matchId: "10",
+    match: "Boca Juniors vs River Plate",
+    league: "Argentine Primera División",
+    bet: "Under 1.5 Goals",
+    odds: 2.7,
+    confidence: 0.62,
+    valueIndex: 1.9,
+    reasoning: "Superclásico matches are typically tense, low-scoring affairs, especially in high-stakes situations. The last 5 matches at La Bombonera have averaged just 1.2 goals per game.",
+    time: "Sunday 22:00",
+    date: new Date(Date.now() + 172800000).toISOString()
+  }
+]; 
