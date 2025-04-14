@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/utils/supabase";
 import ClientLayout from "@/components/ClientLayout";
+import ValueBetsTable from "@/components/ValueBetsTable";
+import { mockBets } from "@/data/mockBets";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -70,7 +73,7 @@ export default function Dashboard() {
         </header>
         
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-8">
             <h2 className="text-xl font-semibold mb-4 dark:text-white">Welcome to your Dashboard</h2>
             
             <div className="mb-6">
@@ -81,11 +84,15 @@ export default function Dashboard() {
                 <p className="dark:text-gray-200"><strong>Last Sign In:</strong> {new Date(user?.last_sign_in_at).toLocaleString()}</p>
               </div>
             </div>
-            
-            <div>
-              <h3 className="text-lg font-medium mb-2 dark:text-white">Your Content</h3>
-              <p className="text-gray-600 dark:text-gray-300">Your personalized dashboard content will appear here.</p>
-            </div>
+          </div>
+          
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4 dark:text-white">Today's Top Value Picks</h2>
+            <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+              These bets offer the best value according to our algorithm's calculations.
+              Higher value index indicates a potentially profitable opportunity.
+            </p>
+            <ValueBetsTable bets={mockBets} />
           </div>
         </main>
       </div>
