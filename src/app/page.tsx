@@ -1,12 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from '@/utils/supabase';
 import ClientLayout from "@/components/ClientLayout";
 
 export default function Home() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const router = useRouter();
+
+  // Check if user is already logged in and redirect to dashboard
+  useEffect(() => {
+    const checkAuth = async () => {
+      setCheckingAuth(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        console.log("User is already logged in, redirecting to dashboard");
+        router.push("/dashboard");
+      } else {
+        console.log("User is not logged in");
+      }
+      
+      setCheckingAuth(false);
+    };
+
+    checkAuth();
+  }, [router]);
 
   const fetchData = async () => {
     try {
@@ -26,6 +48,15 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  // Show a loading state while checking authentication
+  if (checkingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <ClientLayout>

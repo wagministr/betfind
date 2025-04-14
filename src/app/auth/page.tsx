@@ -14,29 +14,36 @@ export default function AuthPage() {
   useEffect(() => {
     // Check current auth status
     const checkAuth = async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        setIsAuthenticated(!!data.session);
-      } catch (error) {
-        console.error("Error checking auth:", error);
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
+      setLoading(true);
+      const { data } = await supabase.auth.getSession();
+      
+      if (data.session) {
+        console.log("User is already authenticated, redirecting to dashboard");
+        // Redirect to dashboard immediately if already authenticated
+        router.push("/dashboard");
       }
+      
+      setIsAuthenticated(!!data.session);
+      setLoading(false);
     };
 
     checkAuth();
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
-      // If authenticated, they'll be redirected by middleware
+      const newAuthStatus = !!session;
+      setIsAuthenticated(newAuthStatus);
+      
+      // Redirect to dashboard when user signs in
+      if (newAuthStatus) {
+        router.push("/dashboard");
+      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [router]);
 
   const handleAuthSuccess = () => {
     router.push("/dashboard"); // Redirect to dashboard after successful auth
@@ -56,6 +63,8 @@ export default function AuthPage() {
     );
   }
 
+  // This will only show if the user is not authenticated
+  // Otherwise, they'll be redirected to dashboard
   return (
     <ClientLayout>
       <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
@@ -64,25 +73,7 @@ export default function AuthPage() {
           <p className="text-gray-600 dark:text-gray-300 text-center mt-2">Sign in to your account</p>
         </div>
 
-        {isAuthenticated ? (
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md w-full max-w-md text-center">
-            <p className="text-xl mb-4 dark:text-white">You are already logged in</p>
-            <button
-              onClick={handleSignOut}
-              className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md transition duration-200"
-            >
-              Sign Out
-            </button>
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="ml-4 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md transition duration-200"
-            >
-              Go to Dashboard
-            </button>
-          </div>
-        ) : (
-          <AuthModal onSuccess={handleAuthSuccess} />
-        )}
+        <AuthModal onSuccess={handleAuthSuccess} />
       </div>
     </ClientLayout>
   );
