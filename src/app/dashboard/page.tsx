@@ -92,7 +92,7 @@ export default function Dashboard() {
               These bets offer the best value according to our algorithm's calculations.
               Higher value index indicates a potentially profitable opportunity.
             </p>
-            <ValueBetsTable bets={mockBets} />
+            <ValueBetsTable bets={mockBets} isAuthed={true} />
           </div>
         </main>
       </div>
