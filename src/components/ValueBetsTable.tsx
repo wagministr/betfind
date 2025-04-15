@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Bet } from "@/types";
+import ReasoningModal from "./ReasoningModal";
 
 interface ValueBetsTableProps {
   bets: Bet[];
@@ -18,6 +19,7 @@ export default function ValueBetsTable({
   const [sortField, setSortField] = useState<keyof Bet>("valueIndex");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [activeAiButton, setActiveAiButton] = useState<string | null>(null);
+  const [activeReasoning, setActiveReasoning] = useState<string | null>(null);
 
   const toggleExpand = (matchId: string) => {
     if (!isAuthed) return; // Prevent expansion if not authenticated
@@ -29,7 +31,7 @@ export default function ValueBetsTable({
     }
   };
 
-  const handleAiClick = (matchId: string, e: React.MouseEvent) => {
+  const handleAiClick = (bet: Bet, e: React.MouseEvent) => {
     if (!isAuthed) {
       e.stopPropagation();
       onLoginClick();
@@ -37,8 +39,7 @@ export default function ValueBetsTable({
     }
     
     e.stopPropagation(); // Prevent row expansion when clicking AI button
-    setActiveAiButton(activeAiButton === matchId ? null : matchId);
-    // In the future, this would open a modal with AI reasoning
+    setActiveReasoning(bet.reasoning);
   };
 
   const handleSort = (field: keyof Bet) => {
@@ -84,6 +85,13 @@ export default function ValueBetsTable({
 
   return (
     <div className="relative">
+      {/* Reasoning Modal */}
+      <ReasoningModal 
+        isOpen={activeReasoning !== null}
+        onClose={() => setActiveReasoning(null)}
+        reasoning={activeReasoning || ''}
+      />
+
       {/* Login overlay for non-authenticated users - only cover the top portion */}
       {!isAuthed && (
         <div 
@@ -242,9 +250,9 @@ export default function ValueBetsTable({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <button
-                        onClick={(e) => handleAiClick(bet.matchId, e)}
+                        onClick={(e) => handleAiClick(bet, e)}
                         className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                          activeAiButton === bet.matchId
+                          activeReasoning === bet.reasoning
                             ? "bg-blue-600 text-white"
                             : "bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
                         }`}
@@ -253,19 +261,6 @@ export default function ValueBetsTable({
                       </button>
                     </td>
                   </tr>
-                  {expandedBet === bet.matchId && (
-                    <tr className={`bg-gray-50 dark:bg-gray-800 ${isBlurred ? "blur-sm opacity-50" : ""}`}>
-                      <td
-                        colSpan={7}
-                        className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300"
-                      >
-                        <div className="font-medium mb-1 text-gray-900 dark:text-white">
-                          Analysis:
-                        </div>
-                        <p>{bet.reasoning}</p>
-                      </td>
-                    </tr>
-                  )}
                 </React.Fragment>
               );
             })}
