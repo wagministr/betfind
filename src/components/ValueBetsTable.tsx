@@ -84,7 +84,7 @@ export default function ValueBetsTable({
   const overlayHeightPercentage = !isAuthed ? (sortedBets.length - 3) / sortedBets.length * 100 : 0;
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       {/* Reasoning Modal */}
       <ReasoningModal 
         isOpen={activeReasoning !== null}
@@ -98,13 +98,13 @@ export default function ValueBetsTable({
           className="absolute top-0 left-0 right-0 bg-gray-900/20 dark:bg-gray-900/40 backdrop-blur-[2px] flex items-center justify-center z-10"
           style={{ height: `${overlayHeightPercentage}%` }}
         >
-          <div className="bg-white/90 dark:bg-gray-800/90 p-5 rounded-lg shadow-lg text-center">
-            <h3 className="text-lg font-semibold mb-3 dark:text-white">
+          <div className="bg-white/90 dark:bg-gray-800/90 p-4 sm:p-5 rounded-lg shadow-lg text-center max-w-[90%] sm:max-w-md">
+            <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-3 dark:text-white">
               Want to see all value bets?
             </h3>
             <button
               onClick={onLoginClick}
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition duration-200"
+              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 sm:px-4 rounded-md transition duration-200 text-sm sm:text-base"
             >
               Log in to access full list
             </button>
@@ -112,13 +112,13 @@ export default function ValueBetsTable({
         </div>
       )}
 
-      <div className="overflow-x-auto z-0 relative">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <div className="w-full overflow-x-auto relative">
+        <table className="min-w-[700px] sm:min-w-full table-auto divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("match")}
               >
                 Match
@@ -130,7 +130,7 @@ export default function ValueBetsTable({
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("league")}
               >
                 League
@@ -142,7 +142,7 @@ export default function ValueBetsTable({
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("bet")}
               >
                 Bet
@@ -154,7 +154,7 @@ export default function ValueBetsTable({
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("odds")}
               >
                 Odds
@@ -166,10 +166,10 @@ export default function ValueBetsTable({
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("confidence")}
               >
-                Confidence
+                Conf
                 {sortField === "confidence" && (
                   <span className="ml-1">
                     {sortDirection === "asc" ? "↑" : "↓"}
@@ -178,7 +178,7 @@ export default function ValueBetsTable({
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
                 onClick={() => handleSort("valueIndex")}
               >
                 Value
@@ -190,7 +190,7 @@ export default function ValueBetsTable({
               </th>
               <th
                 scope="col"
-                className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                className="px-3 sm:px-6 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
               >
                 AI
               </th>
@@ -210,32 +210,32 @@ export default function ValueBetsTable({
                     }`}
                     onClick={() => toggleExpand(bet.matchId)}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                       {bet.match}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300">
                       {bet.league}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300">
                       {bet.bet}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 font-mono">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-300 font-mono">
                       {bet.odds.toFixed(2)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-xs sm:text-sm">
                       <div className="flex items-center">
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                           <div
-                            className="bg-green-600 h-2.5 rounded-full"
+                            className="bg-green-600 h-2 rounded-full"
                             style={{ width: `${bet.confidence * 100}%` }}
                           ></div>
                         </div>
-                        <span className="ml-2 text-gray-500 dark:text-gray-300">
+                        <span className="ml-2 text-gray-500 dark:text-gray-300 text-xs sm:text-sm">
                           {formatPercentage(bet.confidence)}
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
                       <span
                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                           bet.valueIndex >= 1.5
@@ -248,10 +248,10 @@ export default function ValueBetsTable({
                         {bet.valueIndex.toFixed(2)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap text-center">
                       <button
                         onClick={(e) => handleAiClick(bet, e)}
-                        className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                        className={`px-2 sm:px-3 py-1 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                           activeReasoning === bet.reasoning
                             ? "bg-blue-600 text-white"
                             : "bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
