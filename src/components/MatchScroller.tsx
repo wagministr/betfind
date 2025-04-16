@@ -1,3 +1,5 @@
+"use client";
+
 import MatchCard from "./MatchCard"
 
 const mockMatches = [
