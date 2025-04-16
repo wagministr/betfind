@@ -6,11 +6,16 @@ interface Match {
   league: string
 }
 
-export default function MatchCard({ match }: { match: Match }) {
+interface MatchCardProps {
+  match: Match;
+  onClick: () => void;
+}
+
+export default function MatchCard({ match, onClick }: MatchCardProps) {
   return (
     <button
       className="bg-white dark:bg-gray-800 text-black dark:text-white px-6 py-4 rounded-xl shadow-md hover:scale-105 transition-transform duration-200 min-w-[240px] text-left"
-      onClick={() => console.log("Match clicked:", match.id)}
+      onClick={onClick}
     >
       <div className="text-sm text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">
         {match.league}
