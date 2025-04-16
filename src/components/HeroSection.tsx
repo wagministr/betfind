@@ -1,3 +1,5 @@
+"use client";
+
 export default function HeroSection() {
   return (
     <section className="min-h-[40vh] flex flex-col items-center justify-center text-center px-4">

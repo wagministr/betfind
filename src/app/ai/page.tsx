@@ -1,7 +1,7 @@
 "use client";
 
-import HeroSection from "@/components/HeroSection"
-import MatchScroller from "@/components/MatchScroller"
+import HeroSection from "@/components/HeroSection";
+import MatchScroller from "@/components/MatchScroller";
 
 export default function AiLanding() {
   return (
