@@ -36,7 +36,6 @@ export default function MatchScroller() {
       {activeMatch && (
         <ReasoningModal
           isOpen={true}
-          reasoning={`AI analysis for ${activeMatch.match} goes here...`}
           onClose={() => setActiveMatch(null)}
         />
       )}

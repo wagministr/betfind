@@ -6,8 +6,9 @@ export interface Bet {
   betType: string;
   odds: number;
   confidence: number;
-  valueIndex: number;
+  value: number;
   aiAnalysis: string;
+  reasoning: string;
   time: string;
   date: string;
 } 
