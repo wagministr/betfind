@@ -440,4 +440,31 @@ export async function getPredictionsForFixture(fixtureId: number): Promise<Predi
   return await apiFootballGet<PredictionResponse[]>('predictions', {
     fixture: fixtureId.toString(),
   });
+}
+
+/**
+ * Получает детальную информацию о конкретном матче по его ID
+ * @param fixtureId ID матча
+ * @returns Информация о матче или null в случае ошибки
+ */
+export async function getFixtureById(fixtureId: number): Promise<Fixture | null> {
+  try {
+    console.log(`Fetching fixture with ID: ${fixtureId}`);
+    
+    const params: Record<string, string> = {
+      id: fixtureId.toString()
+    };
+    
+    const response = await apiFootballGet<ApiFootballResponse<Fixture[]>>('fixtures', params);
+    
+    if (response.response.length === 0) {
+      console.warn(`No fixture found with ID: ${fixtureId}`);
+      return null;
+    }
+    
+    return response.response[0];
+  } catch (error) {
+    console.error(`Error fetching fixture with ID ${fixtureId}:`, error);
+    return null;
+  }
 } 

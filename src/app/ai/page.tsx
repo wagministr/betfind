@@ -5,6 +5,61 @@ import { mockBets } from '@/data/mockBets';
 import { Bet } from '@/types/Bet';
 import { supabase } from "@/utils/supabase";
 import { useRouter } from 'next/navigation';
+import { getUpcomingFixtures, Fixture } from "@/lib/apiFootball";
+
+// Интерфейс для прогноза из базы данных
+interface AIPrediction {
+  id: string;
+  fixture_id: number;
+  chain_of_thought: string;
+  final_prediction: string;
+  value_bets_json: string;
+  model_version: string;
+  generated_at: string;
+}
+
+// Преобразование данных о матче в формат ставки для отображения
+const fixtureToCard = (fixture: Fixture): {
+  id: string;
+  match: string;
+  league: string;
+  betType: string;
+  odds: number;
+  confidence: number;
+  reasoning: string;
+  fixture_id: number; // Добавляем поле fixture_id для связи с прогнозами
+} => {
+  return {
+    id: fixture.fixture.id.toString(),
+    fixture_id: fixture.fixture.id,
+    match: `${fixture.teams.home.name} vs ${fixture.teams.away.name}`,
+    league: fixture.league.name,
+    betType: "Match Result",
+    odds: 1.85 + Math.random() * 0.5, // Симулируем некоторые коэффициенты для демо
+    confidence: 65 + Math.floor(Math.random() * 15), // Симулируем процент уверенности
+    reasoning: generateReasoning(fixture), // Генерируем текст рассуждения как запасной вариант
+  };
+};
+
+// Генерация текста рассуждения на основе данных о матче
+const generateReasoning = (fixture: Fixture): string => {
+  const homeTeam = fixture.teams.home.name;
+  const awayTeam = fixture.teams.away.name;
+  const date = new Date(fixture.fixture.date).toLocaleDateString();
+  const time = new Date(fixture.fixture.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  
+  return `Analyzing the upcoming match between ${homeTeam} and ${awayTeam}, scheduled for ${date} at ${time}, we can identify several key factors that could influence the outcome.
+
+${homeTeam} has shown consistent form in recent games, especially in home matches where they score an average of 2.1 goals per game. Their attacking line is in excellent form, and their defense concedes rarely — an average of 0.8 goals per home game.
+
+${awayTeam}, on the contrary, is experiencing certain difficulties in away matches, especially against teams with strong home support. In their last 5 away games, they scored only 3 goals and conceded 7.
+
+Head-to-head statistics also favor ${homeTeam} — 3 wins in the last 5 matches. Additionally, 4 out of the last 5 games between these teams saw more than 2.5 goals scored.
+
+Tactical analysis shows that ${homeTeam} will likely dominate in the midfield and create more dangerous opportunities. ${awayTeam} is expected to focus on counter-attacks, but this strategy is unlikely to be sufficient for a win.
+
+Prediction: ${homeTeam} win with 60% probability, draw — 25%, ${awayTeam} win — 15%. Recommended bet: ${homeTeam} to win or over 2.5 goals.`;
+};
 
 export default function AIPage() {
   const router = useRouter();
@@ -17,9 +72,104 @@ export default function AIPage() {
   const [email, setEmail] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [fixtures, setFixtures] = useState<Fixture[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [predictions, setPredictions] = useState<AIPrediction[]>([]);
+  const [valueBets, setValueBets] = useState<any[]>([]);
+  const [loadingPrediction, setLoadingPrediction] = useState(false);
+  const [currentPrediction, setCurrentPrediction] = useState<AIPrediction | null>(null);
+  const [finalPrediction, setFinalPrediction] = useState<string>('');
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const emailTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Загрузка матчей при монтировании компонента
+  useEffect(() => {
+    const loadFixtures = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // Загружаем предстоящие матчи из Premier League (39) и La Liga (140)
+        const upcomingFixtures = await getUpcomingFixtures([39, 140], 3);
+        console.log('Loaded fixtures:', upcomingFixtures);
+        setFixtures(upcomingFixtures);
+        
+        // Загрузим также все доступные прогнозы для этих матчей
+        await loadPredictions();
+        
+        // Check if we have a fixture ID in the URL
+        const searchParams = new URLSearchParams(window.location.search);
+        const fixtureId = searchParams.get('fixtureid');
+        
+        if (fixtureId) {
+          console.log(`Found fixture ID in URL: ${fixtureId}`);
+          const fixtureIdNum = parseInt(fixtureId);
+          
+          // Find the fixture in the loaded fixtures
+          const fixture = upcomingFixtures.find(f => f.fixture.id === fixtureIdNum);
+          
+          if (fixture) {
+            console.log('Found fixture:', fixture);
+            // Create a bet object from the fixture
+            const bet = fixtureToCard(fixture);
+            // Select this bet
+            handleBetSelect(bet);
+          }
+        }
+      } catch (err) {
+        console.error('Error loading fixtures:', err);
+        setError(err instanceof Error ? err.message : 'Error loading matches');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFixtures();
+  }, []);
+  
+  // Загрузка прогнозов из Supabase
+  const loadPredictions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ai_predictions')
+        .select('*')
+        .eq('type', 'pre-match');
+        
+      if (error) {
+        throw error;
+      }
+      
+      if (data) {
+        console.log('Loaded predictions:', data);
+        setPredictions(data as AIPrediction[]);
+      }
+    } catch (err) {
+      console.error('Error loading predictions:', err);
+    }
+  };
+
+  // Check if we have any predictions on component mount and log them
+  useEffect(() => {
+    const checkForPredictions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('ai_predictions')
+          .select('*');
+          
+        if (error) {
+          console.error('Error checking for predictions:', error);
+          return;
+        }
+        
+        console.log('All available predictions in DB:', data);
+      } catch (err) {
+        console.error('Failed to check for predictions:', err);
+      }
+    };
+    
+    checkForPredictions();
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -66,12 +216,18 @@ export default function AIPage() {
     }
   };
 
-  // Filter bets based on search query
-  const filteredBets = mockBets.filter(bet => 
+  // Преобразуем fixtures в формат карточек ставок
+  const fixtureCards = fixtures.map(fixture => fixtureToCard(fixture));
+
+  // Объединяем фикстуры и моковые ставки для поиска
+  const allBets = [...fixtureCards, ...mockBets];
+
+  // Фильтруем ставки на основе поискового запроса
+  const filteredBets = allBets.filter(bet => 
     bet.match.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Function to add human-like typing with natural pauses
+  // Функция добавления эффекта набора человеком текста с естественными паузами
   const humanLikeTyping = (text: string) => {
     // Clear any existing timeouts or intervals
     if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
@@ -124,16 +280,65 @@ export default function AIPage() {
     typeNextChar();
   };
 
-  // Handle bet selection
-  const handleBetSelect = (bet: Bet) => {
+  // Обработка выбора ставки
+  const handleBetSelect = async (bet: any) => {
     setSelectedBet(bet);
-    setIsTyping(true);
+    setIsTyping(false);
     setDisplayedText('');
     setIsBlurred(false);
     setShowEmailPopup(false);
+    setValueBets([]);
+    setCurrentPrediction(null);
+    setFinalPrediction('');
     
-    // Start human-like typing effect
-    humanLikeTyping(bet.reasoning);
+    // Проверяем, есть ли прогноз AI для этого матча
+    if ('fixture_id' in bet) {
+      setLoadingPrediction(true);
+      try {
+        // Fetch the latest prediction for this fixture from Supabase
+        const { data, error } = await supabase
+          .from('ai_predictions')
+          .select('*')
+          .eq('fixture_id', bet.fixture_id)
+          .eq('type', 'pre-match')
+          .order('generated_at', { ascending: false })
+          .limit(1);
+          
+        if (error) {
+          throw error;
+        }
+        
+        if (data && data.length > 0) {
+          const prediction = data[0] as AIPrediction;
+          console.log('Found AI prediction:', prediction);
+          
+          // Store the prediction data
+          setCurrentPrediction(prediction);
+          setDisplayedText(prediction.chain_of_thought);
+          setFinalPrediction(prediction.final_prediction);
+          
+          // Parse and set value bets
+          try {
+            const parsedBets = JSON.parse(prediction.value_bets_json);
+            setValueBets(parsedBets);
+          } catch (e) {
+            console.error('Error parsing value bets:', e);
+            setValueBets([]);
+          }
+        } else {
+          console.log('No AI prediction found for this match');
+          setDisplayedText("AI prediction is being prepared for this match...");
+        }
+      } catch (err) {
+        console.error('Error getting prediction:', err);
+        setDisplayedText("Unable to load prediction data at this time.");
+      } finally {
+        setLoadingPrediction(false);
+      }
+    } else {
+      // For mock data, use the mock reasoning
+      setDisplayedText(bet.reasoning);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -197,7 +402,7 @@ export default function AIPage() {
               </div>
             </div>
 
-            {/* AI response with typing effect */}
+            {/* AI response with prediction data */}
             <div className="relative w-full max-w-3xl">
               <div className={`relative bg-[#161B22] rounded-2xl p-6 transition-all duration-700 ${isBlurred ? 'blur-sm' : ''}`}>
                 <div className="mb-4 flex items-center">
@@ -205,22 +410,35 @@ export default function AIPage() {
                     <span className="text-white font-semibold text-lg">AI</span>
                   </div>
                   <h3 className="ml-3 text-xl font-medium text-[#ECEEF3]">AI Analysis</h3>
+                  
+                  {loadingPrediction && (
+                    <div className="ml-2 animate-pulse text-sm text-gray-400">
+                      Loading prediction...
+                    </div>
+                  )}
                 </div>
                 
-                <div className="text-lg md:text-xl leading-relaxed text-[#ECEEF3] whitespace-pre-line">
-                  {displayedText}
-                  {isTyping && <span className="animate-pulse ml-1">|</span>}
-                </div>
+                {/* Chain of Thought section */}
+                {displayedText && (
+                  <div className="text-md md:text-lg leading-relaxed text-[#ECEEF3]/80 whitespace-pre-line mb-6 border-l-2 border-[#1A88FF]/30 pl-4">
+                    {displayedText}
+                  </div>
+                )}
                 
-                {!isBlurred && !isTyping && (
+                {/* Final Prediction section */}
+                {finalPrediction && !isBlurred && (
+                  <div className="mt-6 mb-8">
+                    <h4 className="text-lg font-medium text-[#ECEEF3]/70 mb-2">Final Prediction:</h4>
+                    <p className="text-xl md:text-2xl font-semibold text-[#ECEEF3]">{finalPrediction}</p>
+                  </div>
+                )}
+                
+                {/* Value Bets section */}
+                {!isBlurred && valueBets.length > 0 && (
                   <div className="mt-8">
                     <h4 className="text-xl font-semibold text-[#ECEEF3] mb-4">🏆 Best Value Bets for {selectedBet.match}</h4>
                     <div className="space-y-3">
-                      {[
-                        { market: selectedBet.betType, odds: selectedBet.odds, confidence: selectedBet.confidence },
-                        { market: "Draw No Bet - " + selectedBet.match.split(" vs ")[0], odds: selectedBet.odds - 0.3, confidence: selectedBet.confidence - 10 },
-                        { market: "Under 3.5 Goals", odds: 1.65, confidence: 65 }
-                      ].map((bet, i) => (
+                      {valueBets.map((bet, i) => (
                         <div key={i} className="flex items-center p-3 bg-white/5 rounded-lg">
                           <div className="flex-1 text-[#ECEEF3]">{bet.market}</div>
                           <div className="font-mono text-[#1A88FF] mx-3">@{bet.odds.toFixed(2)}</div>
@@ -236,17 +454,32 @@ export default function AIPage() {
                     </div>
                   </div>
                 )}
+                
+                {/* Placeholder for when no prediction exists */}
+                {displayedText === "AI prediction is being prepared for this match..." && (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1A88FF] mb-4"></div>
+                    <p className="text-[#ECEEF3]/70 text-center">Our AI is analyzing this match. Check back soon for detailed predictions.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Match scroller - positioned 10% higher than before */}
+      {/* Match scroller - с реальными матчами */}
       {!selectedBet && (
         <div className="fixed bottom-[calc(3.5rem+10%)] left-0 right-0 mb-1 px-4">
           <div className="max-w-3xl mx-auto">
-            <h2 className="text-[#ECEEF3] text-sm font-medium mb-2 text-center">Popular Matches</h2>
+            <h2 className="text-[#ECEEF3] text-sm font-medium mb-2 text-center">
+              {loading ? 'Loading matches...' : `Popular matches (${filteredBets.length})`}
+            </h2>
+            
+            {error && (
+              <p className="text-[#FF6B6B] text-xs text-center mb-2">{error}</p>
+            )}
+            
             <div className="relative overflow-hidden">
               <div className="overflow-x-auto scrollbar-none touch-pan-x pb-2">
                 <div className="flex space-x-2 min-w-max justify-center">
