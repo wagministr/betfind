@@ -38,13 +38,6 @@ const nextConfig: NextConfig = {
   webpack: (config, { isServer, dev }) => {
     // Add custom webpack configuration if needed
     return config;
-  },
-  
-  // Run script during the build process
-  onBuild: async () => {
-    if (process.env.NODE_ENV === 'production') {
-      compileTypeScriptScripts();
-    }
   }
 };
 
