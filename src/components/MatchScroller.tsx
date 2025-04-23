@@ -37,6 +37,7 @@ export default function MatchScroller() {
         <ReasoningModal
           isOpen={true}
           onClose={() => setActiveMatch(null)}
+          reasoning={`AI Analysis for ${activeMatch.match} match in ${activeMatch.league}`}
         />
       )}
     </div>
