@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/build-for-vercel.js",
     "start": "next start",
     "lint": "next lint",
     "update-fixtures": "node scripts/run-update.js",
@@ -20,7 +21,9 @@
     "node-fetch": "^2.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "typescript": "^5",
+    "tsconfig-paths": "^4.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -30,8 +33,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",
-    "tailwindcss": "^4",
-    "tsconfig-paths": "^4.2.0",
-    "typescript": "^5"
+    "tailwindcss": "^4"
   }
 }
