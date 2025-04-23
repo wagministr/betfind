@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 // Simple wrapper to run the updateFixtures script
+const path = require('path');
+
 try {
   // Try to use ts-node if available (development environment)
   require('ts-node').register();
@@ -11,8 +13,21 @@ try {
   if (error.code === 'MODULE_NOT_FOUND') {
     // Check if compiled JS file exists
     const fs = require('fs');
-    const tsFilePath = './updateFixtures.ts';
-    const jsFilePath = './updateFixtures.js';
+    
+    // Use absolute paths
+    const scriptsDir = path.join(process.cwd(), 'scripts');
+    const tsFilePath = path.join(scriptsDir, 'updateFixtures.ts');
+    const jsFilePath = path.join(scriptsDir, 'updateFixtures.js');
+    
+    console.log(`Looking for: ${jsFilePath}`);
+    
+    // List all files in the scripts directory for debugging
+    try {
+      const files = fs.readdirSync(scriptsDir);
+      console.log("Files in scripts directory:", files);
+    } catch (err) {
+      console.error("Error listing files:", err);
+    }
     
     if (fs.existsSync(jsFilePath)) {
       console.log("Using compiled JavaScript version");

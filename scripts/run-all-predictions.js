@@ -2,6 +2,7 @@
 
 // Script for running prediction generation for all matches
 require('dotenv').config();
+const path = require('path');
 
 let generateAllPredictions;
 
@@ -16,7 +17,20 @@ try {
   if (error.code === 'MODULE_NOT_FOUND') {
     // Check if compiled JS file exists
     const fs = require('fs');
-    const jsFilePath = './generate-all-predictions.js';
+    
+    // Use absolute paths
+    const scriptsDir = path.join(process.cwd(), 'scripts');
+    const jsFilePath = path.join(scriptsDir, 'generate-all-predictions.js');
+    
+    console.log(`Looking for: ${jsFilePath}`);
+    
+    // List all files in the scripts directory for debugging
+    try {
+      const files = fs.readdirSync(scriptsDir);
+      console.log("Files in scripts directory:", files);
+    } catch (err) {
+      console.error("Error listing files:", err);
+    }
     
     if (fs.existsSync(jsFilePath)) {
       console.log("Using compiled JavaScript version");
