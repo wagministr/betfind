@@ -326,13 +326,71 @@ export default function AIPage() {
             setValueBets([]);
           }
         } else {
-          console.log('No AI prediction found for this match');
+          console.log('No AI prediction found for this match, generating one');
           setDisplayedText("AI prediction is being prepared for this match...");
+          
+          // Generate a new prediction for this match
+          try {
+            // Generate a sample prediction since we don't have real AI
+            const mockPrediction = {
+              chain_of_thought: generateReasoning(fixtures.find(f => f.fixture.id === bet.fixture_id) || fixtures[0]),
+              final_prediction: `${bet.match.split(' vs ')[0]} to win with 65% probability`,
+              value_bets_json: JSON.stringify([
+                {
+                  market: "Home Win",
+                  odds: 1.85 + Math.random() * 0.5,
+                  confidence: 65 + Math.floor(Math.random() * 15)
+                },
+                {
+                  market: "Over 2.5 Goals",
+                  odds: 1.95 + Math.random() * 0.4,
+                  confidence: 70 + Math.floor(Math.random() * 15)
+                },
+                {
+                  market: "Both Teams to Score",
+                  odds: 1.65 + Math.random() * 0.3,
+                  confidence: 75 + Math.floor(Math.random() * 10)
+                }
+              ])
+            };
+            
+            // Add a delay to simulate AI processing
+            setTimeout(() => {
+              setDisplayedText(mockPrediction.chain_of_thought);
+              setFinalPrediction(mockPrediction.final_prediction);
+              setValueBets(JSON.parse(mockPrediction.value_bets_json));
+              setLoadingPrediction(false);
+            }, 3000);
+            
+            // Optionally save this prediction to Supabase for future use
+            // This would be disabled in production until you have real AI
+            /*
+            const { error: insertError } = await supabase
+              .from('ai_predictions')
+              .insert({
+                fixture_id: bet.fixture_id,
+                chain_of_thought: mockPrediction.chain_of_thought,
+                final_prediction: mockPrediction.final_prediction,
+                value_bets_json: mockPrediction.value_bets_json,
+                model_version: "v1.0-demo",
+                type: "pre-match",
+                generated_at: new Date().toISOString()
+              });
+              
+            if (insertError) {
+              console.error('Error saving mock prediction:', insertError);
+            }
+            */
+            
+          } catch (generateError) {
+            console.error('Error generating prediction:', generateError);
+            setDisplayedText("Error generating AI prediction. Please try again later.");
+            setLoadingPrediction(false);
+          }
         }
       } catch (err) {
         console.error('Error getting prediction:', err);
         setDisplayedText("Unable to load prediction data at this time.");
-      } finally {
         setLoadingPrediction(false);
       }
     } else {
