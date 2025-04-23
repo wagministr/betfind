@@ -5,12 +5,21 @@ import path from 'path';
 // This endpoint is triggered by the Vercel cron job to update fixtures and generate predictions
 export async function GET(request: NextRequest) {
   try {
-    // Verify the request is from a cron job using Vercel's authorization header
- // const authHeader = request.headers.get('Authorization');
-// if (process.env.VERCEL_ENV === 'production' && (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`)) {
-//   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-// }
-
+    // Verify the request is from a Vercel cron job using the authorization header
+    const authHeader = request.headers.get('Authorization');
+    
+    // Get the cron secret from the environment
+    const cronSecret = process.env.CRON_SECRET || '';
+    
+    // Check if this is a Vercel cron job or if the secret matches
+    const isVercelCron = request.headers.get('x-vercel-cron') === '1';
+    const hasValidToken = authHeader === `Bearer ${cronSecret}`;
+    
+    // For security, we require either a valid Vercel cron job header or a valid auth token
+    if (!isVercelCron && !hasValidToken) {
+      console.error('Unauthorized access attempt to cron endpoint');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     
     console.log('Starting daily update process...');
     
