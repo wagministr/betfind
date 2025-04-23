@@ -1,22 +1,23 @@
 #!/usr/bin/env node
 
-// Скрипт для запуска генерации прогнозов для всех матчей
+// Script for running prediction generation for all matches
 require('dotenv').config();
 require('ts-node').register();
+require('tsconfig-paths/register'); // Add support for path aliases
 const { generateAllPredictions } = require('./generate-all-predictions.ts');
 
-console.log('Запуск генерации прогнозов для всех предстоящих матчей...');
+console.log('Starting prediction generation for all upcoming matches...');
 
 generateAllPredictions()
   .then(result => {
-    console.log('\n--- Результаты генерации прогнозов ---');
-    console.log(`Всего матчей: ${result.total}`);
-    console.log(`Сгенерировано прогнозов: ${result.generated}`);
-    console.log(`Пропущено (уже есть прогнозы): ${result.skipped}`);
-    console.log(`Не удалось сгенерировать: ${result.failed}`);
+    console.log('\n--- Prediction Generation Results ---');
+    console.log(`Total matches: ${result.total}`);
+    console.log(`Predictions generated: ${result.generated}`);
+    console.log(`Skipped (already have predictions): ${result.skipped}`);
+    console.log(`Failed to generate: ${result.failed}`);
     process.exit(0);
   })
   .catch(error => {
-    console.error('❌ Ошибка при выполнении скрипта:', error);
+    console.error('❌ Error executing script:', error);
     process.exit(1);
   }); 

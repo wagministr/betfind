@@ -1,21 +1,21 @@
 /**
- * Скрипт для генерации прогнозов на футбольные матчи с использованием API Football и OpenAI
+ * Script for generating predictions for football matches using API-Football and OpenAI
  * 
- * Получает данные о матче, коэффициентах и предсказаниях из API Football,
- * формирует промпт для OpenAI и сохраняет результат в Supabase
+ * Gets match data, odds, and predictions from API-Football,
+ * creates a prompt for OpenAI and saves the result to Supabase
  */
 
-import { getOddsForFixture, getPredictionsForFixture, getFixtureById } from '../src/lib/apiFootball';
-import { supabase } from '../src/utils/supabase';
+import { getOddsForFixture, getPredictionsForFixture, getFixtureById } from '@/lib/apiFootball';
+import { supabase } from '@/utils/supabase';
 
-// Интерфейс для структурированных ставок
+// Interface for structured bets
 interface ValueBet {
   market: string;
   odds: number;
   confidence: number;
 }
 
-// Интерфейс для результата прогноза
+// Interface for prediction results
 interface PredictionResult {
   chain_of_thought: string;
   final_prediction: string;
@@ -23,46 +23,46 @@ interface PredictionResult {
 }
 
 /**
- * Основная функция для генерации прогноза на матч
- * @param fixtureId ID матча из API Football
- * @returns ID созданной записи в базе данных или null в случае ошибки
+ * Main function for generating match predictions
+ * @param fixtureId Football match ID from API-Football
+ * @returns ID of the created database record or null in case of error
  */
 export async function generatePrediction(fixtureId: number): Promise<string | null> {
   try {
-    console.log(`Генерация прогноза для матча с ID: ${fixtureId}`);
+    console.log(`Generating prediction for match ID: ${fixtureId}`);
     
-    // Получаем данные о матче
-    console.log("Получение информации о матче...");
+    // Get match data
+    console.log("Getting match information...");
     const fixtureData = await getFixtureById(fixtureId);
     if (!fixtureData) {
-      throw new Error(`Матч с ID ${fixtureId} не найден`);
+      throw new Error(`Match with ID ${fixtureId} not found`);
     }
 
-    // Получаем коэффициенты
-    console.log("Получение коэффициентов...");
+    // Get odds
+    console.log("Getting odds...");
     const oddsData = await getOddsForFixture(fixtureId);
     
-    // Получаем предсказания
-    console.log("Получение предсказаний...");
+    // Get predictions
+    console.log("Getting predictions...");
     const predictionsData = await getPredictionsForFixture(fixtureId);
 
     if (!oddsData || !predictionsData) {
-      throw new Error('Не удалось получить все необходимые данные для анализа');
+      throw new Error('Could not get all the necessary data for analysis');
     }
 
-    // Строим промпт для OpenAI
+    // Build prompt for OpenAI
     const prompt = buildPrompt(fixtureData, oddsData, predictionsData);
     
-    // Отправляем запрос к OpenAI
-    console.log("Отправка запроса к OpenAI...");
+    // Send request to OpenAI
+    console.log("Sending request to OpenAI...");
     const aiResponse = await callOpenAI(prompt);
     
-    // Парсим ответ
-    console.log("Обработка ответа от OpenAI...");
+    // Parse response
+    console.log("Processing OpenAI response...");
     const parsedResponse = parseOpenAIResponse(aiResponse);
     
-    // Сохраняем результат в Supabase
-    console.log("Сохранение прогноза в базу данных...");
+    // Save result to Supabase
+    console.log("Saving prediction to database...");
     const { data, error } = await supabase
       .from('ai_predictions')
       .insert({
@@ -77,20 +77,20 @@ export async function generatePrediction(fixtureId: number): Promise<string | nu
       .select();
     
     if (error) {
-      throw new Error(`Ошибка при сохранении в Supabase: ${error.message}`);
+      throw new Error(`Error saving to Supabase: ${error.message}`);
     }
     
-    console.log(`Прогноз успешно сохранен с ID: ${data[0].id}`);
+    console.log(`Prediction successfully saved with ID: ${data[0].id}`);
     return data[0].id;
     
   } catch (error) {
-    console.error('Ошибка при генерации прогноза:', error);
+    console.error('Error generating prediction:', error);
     return null;
   }
 }
 
 /**
- * Строит промпт для OpenAI на основе данных о матче
+ * Builds a prompt for OpenAI based on match data
  */
 function buildPrompt(fixtureData: any, oddsData: any, predictionsData: any): string {
   const homeTeam = fixtureData.teams.home.name;
@@ -98,135 +98,135 @@ function buildPrompt(fixtureData: any, oddsData: any, predictionsData: any): str
   const leagueName = fixtureData.league.name;
   const kickoffTime = new Date(fixtureData.fixture.date).toLocaleString();
   
-  // Подготовка данных о коэффициентах для популярных рынков
-  let oddsInfo = "Коэффициенты отсутствуют";
+  // Prepare odds data for popular markets
+  let oddsInfo = "Odds not available";
   
   if (oddsData && oddsData.length > 0 && oddsData[0].bookmakers && oddsData[0].bookmakers.length > 0) {
     const bookmaker = oddsData[0].bookmakers[0];
     const markets = bookmaker.bets;
     
-    oddsInfo = "Коэффициенты:\n";
+    oddsInfo = "Odds:\n";
     
-    // Добавляем исходы матча (1X2)
+    // Add match outcomes (1X2)
     const homeDrawAway = markets.find((m: any) => m.name === "Match Winner");
     if (homeDrawAway) {
-      oddsInfo += "Исход матча:\n";
+      oddsInfo += "Match outcome:\n";
       homeDrawAway.values.forEach((v: any) => {
         oddsInfo += `- ${v.value}: ${v.odd}\n`;
       });
     }
     
-    // Добавляем тоталы
+    // Add totals
     const overUnder = markets.find((m: any) => m.name === "Goals Over/Under");
     if (overUnder) {
-      oddsInfo += "\nТоталы:\n";
+      oddsInfo += "\nTotals:\n";
       overUnder.values.forEach((v: any) => {
         oddsInfo += `- ${v.value}: ${v.odd}\n`;
       });
     }
     
-    // Добавляем обе забьют
+    // Add both teams to score
     const btts = markets.find((m: any) => m.name === "Both Teams Score");
     if (btts) {
-      oddsInfo += "\nОбе забьют:\n";
+      oddsInfo += "\nBoth teams to score:\n";
       btts.values.forEach((v: any) => {
         oddsInfo += `- ${v.value}: ${v.odd}\n`;
       });
     }
   }
   
-  // Подготовка данных о предсказаниях
-  let predictionsInfo = "Предсказания отсутствуют";
+  // Prepare prediction data
+  let predictionsInfo = "Predictions not available";
   
   if (predictionsData && predictionsData.predictions) {
     const p = predictionsData.predictions;
-    predictionsInfo = `Предсказания API:\n`;
-    predictionsInfo += `- Победа ${homeTeam}: ${p.percent.home}%\n`;
-    predictionsInfo += `- Ничья: ${p.percent.draw}%\n`;
-    predictionsInfo += `- Победа ${awayTeam}: ${p.percent.away}%\n\n`;
+    predictionsInfo = `API Predictions:\n`;
+    predictionsInfo += `- ${homeTeam} win: ${p.percent.home}%\n`;
+    predictionsInfo += `- Draw: ${p.percent.draw}%\n`;
+    predictionsInfo += `- ${awayTeam} win: ${p.percent.away}%\n\n`;
     
     if (p.advice) {
-      predictionsInfo += `Совет API: ${p.advice}\n`;
+      predictionsInfo += `API Advice: ${p.advice}\n`;
     }
     
     if (predictionsData.teams && predictionsData.teams.home && predictionsData.teams.away) {
       const home = predictionsData.teams.home;
       const away = predictionsData.teams.away;
       
-      predictionsInfo += `\nФорма ${homeTeam}: ${home.league.form}\n`;
-      predictionsInfo += `Форма ${awayTeam}: ${away.league.form}\n\n`;
+      predictionsInfo += `\n${homeTeam} form: ${home.league.form}\n`;
+      predictionsInfo += `${awayTeam} form: ${away.league.form}\n\n`;
       
-      predictionsInfo += `Среднее количество забитых голов (${homeTeam}): ${home.league.goals.for.average.total}\n`;
-      predictionsInfo += `Среднее количество пропущенных голов (${homeTeam}): ${home.league.goals.against.average.total}\n`;
-      predictionsInfo += `Среднее количество забитых голов (${awayTeam}): ${away.league.goals.for.average.total}\n`;
-      predictionsInfo += `Среднее количество пропущенных голов (${awayTeam}): ${away.league.goals.against.average.total}\n`;
+      predictionsInfo += `Average goals scored (${homeTeam}): ${home.league.goals.for.average.total}\n`;
+      predictionsInfo += `Average goals conceded (${homeTeam}): ${home.league.goals.against.average.total}\n`;
+      predictionsInfo += `Average goals scored (${awayTeam}): ${away.league.goals.for.average.total}\n`;
+      predictionsInfo += `Average goals conceded (${awayTeam}): ${away.league.goals.against.average.total}\n`;
     }
   }
   
-  // Формируем полный промпт
+  // Build the full prompt
   return `
-Ты - опытный футбольный аналитик и эксперт по ставкам. Твоя задача - проанализировать предстоящий матч и предоставить глубокий анализ с конкретными рекомендациями по ставкам.
+You are an experienced football analyst and betting expert. Your task is to analyze the upcoming match and provide in-depth analysis with specific betting recommendations.
 
-Информация о матче:
-- Матч: ${homeTeam} vs ${awayTeam}
-- Лига: ${leagueName}
-- Дата и время: ${kickoffTime}
+Match information:
+- Match: ${homeTeam} vs ${awayTeam}
+- League: ${leagueName}
+- Date and time: ${kickoffTime}
 
 ${oddsInfo}
 
 ${predictionsInfo}
 
-На основе этих данных:
+Based on this data:
 
-1. Сначала проведи подробный анализ (Chain of Thought), где рассмотри:
-   - Текущую форму команд
-   - Историю личных встреч
-   - Травмы и дисквалификации (если информация есть)
-   - Тактический разбор
-   - Ключевые факторы, влияющие на исход
-   - Специфику лиги и условий матча
+1. First, provide a detailed analysis (Chain of Thought), considering:
+   - Current form of both teams
+   - Head-to-head history
+   - Injuries and suspensions (if information is available)
+   - Tactical analysis
+   - Key factors influencing the outcome
+   - League specifics and match conditions
 
-2. Затем предоставь короткое итоговое предсказание (Final Prediction) в 2-3 предложения.
+2. Then provide a short final prediction (Final Prediction) in 2-3 sentences.
 
-3. В конце укажи ТОП-3 ценных ставки (Value Bets) в следующем формате:
-   Рынок: [название рынка]
-   Коэффициент: [число]
-   Уверенность: [число]%
+3. Finally, list TOP-3 value bets in the following format:
+   Market: [market name]
+   Odds: [number]
+   Confidence: [number]%
 
-Твой ответ должен быть структурирован так:
+Your answer should be structured as follows:
 
 CHAIN OF THOUGHT:
-[Твой подробный анализ]
+[Your detailed analysis]
 
 FINAL PREDICTION:
-[Краткое итоговое предсказание]
+[Brief final prediction]
 
 VALUE BETS:
-Рынок: [название рынка 1]
-Коэффициент: [число]
-Уверенность: [число]%
+Market: [market name 1]
+Odds: [number]
+Confidence: [number]%
 
-Рынок: [название рынка 2]
-Коэффициент: [число]
-Уверенность: [число]%
+Market: [market name 2]
+Odds: [number]
+Confidence: [number]%
 
-Рынок: [название рынка 3]
-Коэффициент: [число]
-Уверенность: [число]%
+Market: [market name 3]
+Odds: [number]
+Confidence: [number]%
 `;
 }
 
 /**
- * Отправляет запрос к API OpenAI
- * @param prompt Текст запроса
- * @returns Ответ от API
+ * Sends a request to the OpenAI API
+ * @param prompt Request text
+ * @returns Response from the API
  */
 async function callOpenAI(prompt: string): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   const model = process.env.OPENAI_API_MODEL || "o4-mini";
   
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY не найден в переменных окружения');
+    throw new Error('OPENAI_API_KEY not found in environment variables');
   }
   
   try {
@@ -241,7 +241,7 @@ async function callOpenAI(prompt: string): Promise<string> {
         messages: [
           {
             role: "system",
-            content: "Ты - опытный футбольный аналитик и эксперт по ставкам. Отвечай только на русском языке."
+            content: "You are an experienced football analyst and betting expert. Answer only in English."
           },
           {
             role: "user",
@@ -256,24 +256,24 @@ async function callOpenAI(prompt: string): Promise<string> {
     
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Ошибка API OpenAI: ${response.status} ${errorText}`);
+      throw new Error(`OpenAI API Error: ${response.status} ${errorText}`);
     }
     
     const data = await response.json();
     return data.choices[0].message.content;
     
   } catch (error) {
-    throw new Error(`Ошибка при обращении к OpenAI: ${error}`);
+    throw new Error(`Error contacting OpenAI: ${error}`);
   }
 }
 
 /**
- * Парсит ответ от OpenAI
- * @param response Текст ответа
- * @returns Структурированный результат
+ * Parses the OpenAI response
+ * @param response Response text
+ * @returns Structured result
  */
 function parseOpenAIResponse(response: string): PredictionResult {
-  // Разделяем ответ на части по ключевым словам
+  // Split the response into parts by keywords
   const chainRegex = /CHAIN OF THOUGHT:([\s\S]*?)(?=FINAL PREDICTION:|$)/i;
   const finalRegex = /FINAL PREDICTION:([\s\S]*?)(?=VALUE BETS:|$)/i;
   const valueBetsRegex = /VALUE BETS:([\s\S]*?)$/i;
@@ -282,27 +282,27 @@ function parseOpenAIResponse(response: string): PredictionResult {
   const finalMatch = response.match(finalRegex);
   const valueBetsMatch = response.match(valueBetsRegex);
   
-  // Извлекаем цепочку рассуждений
+  // Extract chain of thought
   const chainOfThought = chainMatch && chainMatch[1] ? chainMatch[1].trim() : '';
   
-  // Извлекаем итоговое предсказание
+  // Extract final prediction
   const finalPrediction = finalMatch && finalMatch[1] ? finalMatch[1].trim() : '';
   
-  // Парсим ставки
+  // Parse bets
   const valueBets: ValueBet[] = [];
   
   if (valueBetsMatch && valueBetsMatch[1]) {
     const valueBetsText = valueBetsMatch[1].trim();
     
-    // Разбиваем текст на блоки ставок (разделенные пустыми строками)
+    // Split text into bet blocks (separated by empty lines)
     const betBlocks = valueBetsText.split(/\n\s*\n/);
     
     for (const block of betBlocks) {
       if (!block.trim()) continue;
       
-      const marketMatch = block.match(/Рынок:\s*(.+)/i);
-      const oddsMatch = block.match(/Коэффициент:\s*(\d+\.?\d*)/i);
-      const confidenceMatch = block.match(/Уверенность:\s*(\d+)%/i);
+      const marketMatch = block.match(/Market:\s*(.+)/i);
+      const oddsMatch = block.match(/Odds:\s*(\d+\.?\d*)/i);
+      const confidenceMatch = block.match(/Confidence:\s*(\d+)%/i);
       
       if (marketMatch && oddsMatch && confidenceMatch) {
         valueBets.push({
@@ -322,30 +322,30 @@ function parseOpenAIResponse(response: string): PredictionResult {
 }
 
 /**
- * Основная функция для ручного запуска скрипта
+ * Main function for manual script execution
  */
 async function main() {
   try {
-    // ID матча для тестирования
-    const testFixtureId = 1090754; // Можно заменить на актуальный ID матча
+    // Test match ID
+    const testFixtureId = 1090754; // Can be replaced with an actual match ID
     
-    console.log('Запуск генерации прогноза...');
+    console.log('Starting prediction generation...');
     const result = await generatePrediction(testFixtureId);
     
     if (result) {
-      console.log(`Прогноз успешно сгенерирован и сохранен с ID: ${result}`);
+      console.log(`Prediction successfully generated and saved with ID: ${result}`);
       process.exit(0);
     } else {
-      console.error('Не удалось сгенерировать прогноз');
+      console.error('Failed to generate prediction');
       process.exit(1);
     }
   } catch (error) {
-    console.error('Ошибка при выполнении скрипта:', error);
+    console.error('Error running script:', error);
     process.exit(1);
   }
 }
 
-// Запуск скрипта при прямом вызове
+// Run script if called directly
 if (require.main === module) {
   main();
 }

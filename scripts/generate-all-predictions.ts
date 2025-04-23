@@ -1,16 +1,16 @@
 /**
- * Скрипт для генерации прогнозов для всех доступных предстоящих матчей
+ * Script for generating predictions for all available upcoming matches
  * 
- * Получает список предстоящих матчей, проверяет наличие прогнозов в базе данных
- * и генерирует недостающие прогнозы с использованием OpenAI
+ * Gets a list of upcoming matches, checks for existing predictions in the database
+ * and generates missing predictions using OpenAI
  */
 
-import { getUpcomingFixtures } from '../src/lib/apiFootball';
-import { supabase } from '../src/utils/supabase';
+import { getUpcomingFixtures } from '@/lib/apiFootball';
+import { supabase } from '@/utils/supabase';
 import generatePrediction from './generatePrediction';
 
 /**
- * Основная функция для генерации прогнозов для всех матчей
+ * Main function for generating predictions for all matches
  */
 export async function generateAllPredictions(): Promise<{
   total: number;
@@ -26,101 +26,101 @@ export async function generateAllPredictions(): Promise<{
   };
 
   try {
-    // Получаем все предстоящие матчи из Premier League и La Liga
-    console.log('Получение списка предстоящих матчей...');
+    // Get all upcoming matches from Premier League and La Liga
+    console.log('Getting list of upcoming matches...');
     const fixtures = await getUpcomingFixtures([39, 140], 3);
     summary.total = fixtures.length;
     
-    console.log(`Найдено ${fixtures.length} предстоящих матчей`);
+    console.log(`Found ${fixtures.length} upcoming matches`);
     
     if (fixtures.length === 0) {
-      console.log('Нет предстоящих матчей для генерации прогнозов.');
+      console.log('No upcoming matches for prediction generation.');
       return summary;
     }
     
-    // Получаем существующие прогнозы из базы данных
-    console.log('Получение существующих прогнозов из базы данных...');
+    // Get existing predictions from database
+    console.log('Getting existing predictions from database...');
     const { data: existingPredictions, error } = await supabase
       .from('ai_predictions')
       .select('fixture_id')
       .eq('type', 'pre-match');
     
     if (error) {
-      console.error('Ошибка при получении существующих прогнозов:', error);
+      console.error('Error getting existing predictions:', error);
       throw error;
     }
     
-    // Создаем набор ID матчей, для которых уже есть прогнозы
+    // Create a set of match IDs that already have predictions
     const existingFixtureIds = new Set(existingPredictions?.map(p => p.fixture_id) || []);
-    console.log(`Найдено ${existingFixtureIds.size} существующих прогнозов`);
+    console.log(`Found ${existingFixtureIds.size} existing predictions`);
     
-    // Фильтруем матчи, для которых еще нет прогнозов
+    // Filter matches that don't have predictions yet
     const fixturesNeedingPredictions = fixtures.filter(f => !existingFixtureIds.has(f.fixture.id));
-    console.log(`Требуется сгенерировать ${fixturesNeedingPredictions.length} новых прогнозов`);
+    console.log(`Need to generate ${fixturesNeedingPredictions.length} new predictions`);
     
-    // Генерируем прогнозы с паузами между запросами
+    // Generate predictions with pauses between requests
     for (let i = 0; i < fixturesNeedingPredictions.length; i++) {
       const fixture = fixturesNeedingPredictions[i];
       const fixtureId = fixture.fixture.id;
       
-      console.log(`[${i+1}/${fixturesNeedingPredictions.length}] Генерация прогноза для матча ${fixture.teams.home.name} vs ${fixture.teams.away.name}...`);
+      console.log(`[${i+1}/${fixturesNeedingPredictions.length}] Generating prediction for match ${fixture.teams.home.name} vs ${fixture.teams.away.name}...`);
       
       try {
-        // Генерируем прогноз
+        // Generate prediction
         const predictionId = await generatePrediction(fixtureId);
         
         if (predictionId) {
-          console.log(`✅ Прогноз успешно сгенерирован с ID: ${predictionId}`);
+          console.log(`✅ Prediction successfully generated with ID: ${predictionId}`);
           summary.generated++;
         } else {
-          console.log(`❌ Не удалось сгенерировать прогноз для матча с ID: ${fixtureId}`);
+          console.log(`❌ Failed to generate prediction for match with ID: ${fixtureId}`);
           summary.failed++;
         }
       } catch (err) {
-        console.error(`❌ Ошибка при генерации прогноза для матча с ID: ${fixtureId}:`, err);
+        console.error(`❌ Error generating prediction for match with ID: ${fixtureId}:`, err);
         summary.failed++;
       }
       
-      // Пауза между запросами, чтобы не превысить лимиты API OpenAI
+      // Pause between requests to avoid exceeding OpenAI API limits
       if (i < fixturesNeedingPredictions.length - 1) {
-        console.log('Пауза 5 секунд перед следующим запросом...');
+        console.log('Pausing 5 seconds before next request...');
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
     
-    // Обновляем статистику пропущенных матчей
+    // Update skipped match statistics
     summary.skipped = existingFixtureIds.size;
     
     return summary;
     
   } catch (error) {
-    console.error('Ошибка при генерации прогнозов:', error);
+    console.error('Error generating predictions:', error);
     throw error;
   }
 }
 
 /**
- * Функция для запуска скрипта вручную
+ * Function for manual script execution
  */
 async function main() {
   try {
-    console.log('Запуск генерации прогнозов для всех матчей...');
+    console.log('Starting prediction generation for all matches...');
     const result = await generateAllPredictions();
     
-    console.log('\n--- Результаты генерации прогнозов ---');
-    console.log(`Всего матчей: ${result.total}`);
-    console.log(`Сгенерировано прогнозов: ${result.generated}`);
-    console.log(`Пропущено (уже есть прогнозы): ${result.skipped}`);
-    console.log(`Не удалось сгенерировать: ${result.failed}`);
+    console.log('\n--- Prediction Generation Results ---');
+    console.log(`Total matches: ${result.total}`);
+    console.log(`Predictions generated: ${result.generated}`);
+    console.log(`Skipped (already have predictions): ${result.skipped}`);
+    console.log(`Failed to generate: ${result.failed}`);
     
     process.exit(0);
   } catch (error) {
-    console.error('Ошибка при выполнении скрипта:', error);
+    console.error('Error executing script:', error);
     process.exit(1);
   }
 }
 
-// Запускаем скрипт, если он вызван напрямую
+// Run script if called directly
 if (require.main === module) {
   main();
 } 
