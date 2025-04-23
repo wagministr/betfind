@@ -1,0 +1,11 @@
+# Build directories
+.next/
+out/
+build/
+dist/
+
+# Node modules
+node_modules/
+
+# Cache
+.vercel/ 
