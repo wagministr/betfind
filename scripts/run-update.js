@@ -1,5 +1,20 @@
 #!/usr/bin/env node
 
+// Load environment variables from .env file
+require('dotenv').config();
+
+// Check if required environment variables are set
+const missingVars = [
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY'
+].filter(varName => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+  console.error('Please check your .env file or environment configuration');
+  process.exit(1);
+}
+
 // Simple wrapper to run the updateFixtures script
 const path = require('path');
 

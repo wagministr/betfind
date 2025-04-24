@@ -1,8 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { spawn } from 'child_process';
+import path from 'path';
+import { validateEnv } from '@/utils/envCheck';
+import { testSupabaseConnection } from '@/utils/supabase';
 
-// This is a simplified version of the cron endpoint for testing purposes
+// This endpoint runs daily updates for fixtures and predictions
 export async function GET(request: NextRequest) {
   try {
+    // Explicit environment variable checks
+    if (!process.env.CRON_SECRET) {
+      console.error('❌ Missing CRON_SECRET in environment variables');
+      return NextResponse.json({ 
+        error: 'Missing required environment variable: CRON_SECRET' 
+      }, { status: 500 });
+    }
+
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('❌ Missing OPENAI_API_KEY in environment variables');
+      return NextResponse.json({ 
+        error: 'Missing required environment variable: OPENAI_API_KEY' 
+      }, { status: 500 });
+    }
+
+    if (!process.env.API_FOOTBALL_KEY) {
+      console.error('❌ Missing API_FOOTBALL_KEY in environment variables');
+      return NextResponse.json({ 
+        error: 'Missing required environment variable: API_FOOTBALL_KEY' 
+      }, { status: 500 });
+    }
+    
+    // Complete environment check
+    const envCheck = validateEnv();
+    if (!envCheck.isValid) {
+      console.error('Environment validation failed:', envCheck.message);
+      return NextResponse.json({ 
+        error: 'Environment configuration error', 
+        details: envCheck.message 
+      }, { status: 500 });
+    }
+
+    // Test Supabase connection
+    const isSupabaseConnected = await testSupabaseConnection();
+    if (!isSupabaseConnected) {
+      return NextResponse.json({ 
+        error: 'Failed to connect to Supabase database' 
+      }, { status: 500 });
+    }
+    
     // Verify the request is from a Vercel cron job using the authorization header
     const authHeader = request.headers.get('Authorization');
     
@@ -21,24 +65,26 @@ export async function GET(request: NextRequest) {
     
     console.log('Starting daily update process...');
     
-    // Instead of running actual scripts (which have deployment issues),
-    // we'll just simulate a successful update for now
+    // Get the path to the project root
+    const rootDir = process.cwd();
     
-    // Simulate updating fixtures
-    console.log('Simulating fixture update...');
-    await simulateDelay(1000); // Simulate a 1 second process
+    // 1. Run the update fixtures script
+    console.log('Running fixture update script...');
+    const updateResult = await executeScript(path.join(rootDir, 'scripts', 'run-update.js'));
+    console.log('Fixtures update completed:', updateResult);
     
-    // Simulate generating predictions
-    console.log('Simulating prediction generation...');
-    await simulateDelay(1000); // Simulate a 1 second process
+    // 2. Run the generate predictions script
+    console.log('Running prediction generation script...');
+    const predictionsResult = await executeScript(path.join(rootDir, 'scripts', 'run-all-predictions.js'));
+    console.log('Prediction generation completed:', predictionsResult);
     
     // Return a success response
     return NextResponse.json({ 
       success: true, 
-      message: 'Daily update simulation completed successfully',
+      message: 'Daily update completed successfully',
       timestamp: new Date().toISOString(),
-      fixtures_updated: 15,
-      predictions_generated: 8
+      fixtures_update: updateResult,
+      predictions_generation: predictionsResult
     });
   } catch (error) {
     console.error('Error in daily update process:', error);
@@ -48,7 +94,41 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// Helper function to simulate a delay
-function simulateDelay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-} 
+// Helper function to execute a script and return its output
+function executeScript(scriptPath: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    console.log(`Executing script: ${scriptPath}`);
+    
+    const child = spawn('node', [scriptPath]);
+    
+    let stdout = '';
+    let stderr = '';
+    
+    child.stdout.on('data', (data) => {
+      const output = data.toString();
+      stdout += output;
+      console.log(`SCRIPT OUTPUT: ${output}`);
+    });
+    
+    child.stderr.on('data', (data) => {
+      const output = data.toString();
+      stderr += output;
+      console.error(`SCRIPT ERROR: ${output}`);
+    });
+    
+    child.on('error', (error) => {
+      console.error(`Failed to start script: ${error.message}`);
+      reject(error);
+    });
+    
+    child.on('close', (code) => {
+      console.log(`Script exited with code ${code}`);
+      
+      if (code !== 0) {
+        reject(new Error(`Script exited with code ${code}: ${stderr}`));
+      } else {
+        resolve(stdout);
+      }
+    });
+  });
+}

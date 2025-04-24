@@ -3,6 +3,20 @@
  * Fetches upcoming fixtures from the API-Football service and stores them in Supabase
  */
 
+// Load environment variables from .env file
+import 'dotenv/config';
+
+// Explicit check for required environment variables
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_URL in .env');
+  process.exit(1);
+}
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  console.error('❌ Missing NEXT_PUBLIC_SUPABASE_ANON_KEY in .env');
+  process.exit(1);
+}
+
 import { getUpcomingFixtures, Fixture } from '../src/lib/apiFootball';
 import { supabase } from '../src/utils/supabase';
 
@@ -18,7 +32,7 @@ interface FixtureRecord {
   status: string;
   score_home: number | null;
   score_away: number | null;
-  last_updated: string;
+  created_at?: string; // Optional since it might be auto-generated
 }
 
 /**
@@ -98,7 +112,7 @@ async function processFixture(fixture: Fixture): Promise<void> {
     status: fixture.fixture.status.short,
     score_home: fixture.goals.home,
     score_away: fixture.goals.away,
-    last_updated: new Date().toISOString(),
+    created_at: new Date().toISOString() // Only set this if needed, might be auto-generated
   };
 
   const { error } = await supabase

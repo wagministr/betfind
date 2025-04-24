@@ -1,60 +1,70 @@
-// This is a compiled version of generate-all-predictions.ts
-// Created manually to ensure the cron job can run
+// This file is a wrapper to execute the TypeScript implementation
+// It ensures the cron job can run without TypeScript compilation issues
 
-const { supabase } = require('../src/utils/supabase');
+require('dotenv').config();
+const path = require('path');
+const { spawn } = require('child_process');
 
 /**
- * Generate predictions for all upcoming fixtures that don't have predictions yet
+ * Execute the TypeScript implementation via ts-node
  */
-async function generateAllPredictions() {
-  console.log('Starting prediction generation for all upcoming fixtures...');
-  
-  try {
-    // In the actual implementation, this would generate predictions for fixtures
-    // and store them in the database
+async function runTsImplementation() {
+  return new Promise((resolve, reject) => {
+    console.log('Executing TypeScript implementation via ts-node...');
     
-    // Simulate successful operation
-    const result = {
-      success: true,
-      total: 10,
-      generated: 7,
-      skipped: 2,
-      failed: 1
-    };
+    // Define the path to ts-node and the TypeScript file
+    const tsNodeBin = path.join(process.cwd(), 'node_modules', '.bin', 'ts-node');
+    const tsScriptPath = path.join(__dirname, 'generate-all-predictions.ts');
     
-    console.log('Prediction generation completed successfully');
-    console.log(`Total: ${result.total}, Generated: ${result.generated}, Skipped: ${result.skipped}, Failed: ${result.failed}`);
+    // Spawn the process
+    const tsProcess = spawn(tsNodeBin, [
+      '--transpile-only',                 // Только транспиляция без проверки типов для скорости
+      '--require', 'tsconfig-paths/register', // Для поддержки алиасов путей
+      tsScriptPath                        // Путь к TypeScript файлу
+    ], {
+      stdio: 'inherit', // Show output in console
+      shell: true       // Use shell for cross-platform compatibility
+    });
     
-    return result;
-  } catch (error) {
-    console.error('Error generating predictions:', error);
-    return {
-      success: false,
-      error: error.message || 'Unknown error',
-      total: 0,
-      generated: 0,
-      skipped: 0,
-      failed: 0
-    };
-  }
+    // Handle process completion
+    tsProcess.on('close', (code) => {
+      if (code === 0) {
+        console.log('TypeScript implementation completed successfully');
+        resolve({
+          success: true,
+          message: 'Predictions generation completed successfully'
+        });
+      } else {
+        const error = new Error(`TypeScript implementation failed with code ${code}`);
+        console.error(error.message);
+        reject(error);
+      }
+    });
+    
+    // Handle process errors
+    tsProcess.on('error', (err) => {
+      console.error('Failed to start TypeScript process:', err);
+      reject(err);
+    });
+  });
 }
 
 // Export the function
-exports.generateAllPredictions = generateAllPredictions;
+exports.generateAllPredictions = runTsImplementation;
 
 // Default export for TypeScript compatibility
-exports.default = generateAllPredictions;
+exports.default = runTsImplementation;
 
 // If this file is run directly
 if (require.main === module) {
-  console.log('Running generate-all-predictions.js directly...');
-  generateAllPredictions()
-    .then(result => {
-      console.log('Result:', result);
+  console.log('Running generate-all-predictions.js wrapper...');
+  runTsImplementation()
+    .then(() => {
+      console.log('Prediction generation completed successfully');
       process.exit(0);
     })
     .catch(error => {
-      console.error('Error:', error);
+      console.error('Error during prediction generation:', error);
       process.exit(1);
     });
 } 

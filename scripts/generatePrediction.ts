@@ -5,8 +5,38 @@
  * creates a prompt for OpenAI and saves the result to Supabase
  */
 
-import { getOddsForFixture, getPredictionsForFixture, getFixtureById } from '@/lib/apiFootball';
-import { supabase } from '@/utils/supabase';
+// Load environment variables from .env file
+import 'dotenv/config';
+
+// Explicit environment variable checks
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error("❌ Missing OPENAI_API_KEY in .env");
+}
+
+if (!process.env.API_FOOTBALL_KEY) {
+  throw new Error("❌ Missing API_FOOTBALL_KEY in .env");
+}
+
+if (!process.env.SUPABASE_URL) {
+  throw new Error("❌ Missing SUPABASE_URL in .env");
+}
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error("❌ Missing SUPABASE_SERVICE_ROLE_KEY in .env");
+}
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  throw new Error("❌ Missing NEXT_PUBLIC_SUPABASE_URL in .env");
+}
+
+if (!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  throw new Error("❌ Missing NEXT_PUBLIC_SUPABASE_ANON_KEY in .env");
+}
+
+// Заменяем импорты с алиасом @ на относительные пути
+import { getOddsForFixture, getPredictionsForFixture, getFixtureById } from '../src/lib/apiFootball';
+import { supabase } from '../src/utils/supabase';
+import { validateEnvOrExit } from '../src/utils/envCheck';
 
 // Interface for structured bets
 interface ValueBet {
@@ -29,25 +59,68 @@ interface PredictionResult {
  */
 export async function generatePrediction(fixtureId: number): Promise<string | null> {
   try {
+    // Validate environment variables first
+    validateEnvOrExit();
+    
     console.log(`Generating prediction for match ID: ${fixtureId}`);
     
     // Get match data
     console.log("Getting match information...");
-    const fixtureData = await getFixtureById(fixtureId);
-    if (!fixtureData) {
-      throw new Error(`Match with ID ${fixtureId} not found`);
+    let fixtureData;
+    try {
+      fixtureData = await getFixtureById(fixtureId);
+      if (!fixtureData) {
+        throw new Error(`Match with ID ${fixtureId} not found`);
+      }
+      console.log(`✅ Successfully retrieved fixture data for ${fixtureData.teams.home.name} vs ${fixtureData.teams.away.name}`);
+    } catch (error) {
+      console.error(`❌ API-Football Error: Failed to get fixture data:`, error);
+      throw new Error(`Failed to retrieve match data: ${error instanceof Error ? error.message : String(error)}`);
     }
 
     // Get odds
     console.log("Getting odds...");
-    const oddsData = await getOddsForFixture(fixtureId);
+    let oddsData: any[] = [];
+    try {
+      const fetchedOdds = await getOddsForFixture(fixtureId);
+      oddsData = fetchedOdds || [];
+      if (oddsData.length > 0) {
+        console.log(`✅ Successfully retrieved odds data with ${oddsData.length} bookmakers`);
+      } else {
+        console.warn(`⚠️ No odds data available for fixture ${fixtureId}`);
+      }
+    } catch (error) {
+      console.error(`⚠️ API-Football Error: Failed to get odds data:`, error);
+      // Don't throw, use fallback empty array
+    }
     
     // Get predictions
     console.log("Getting predictions...");
-    const predictionsData = await getPredictionsForFixture(fixtureId);
-
-    if (!oddsData || !predictionsData) {
-      throw new Error('Could not get all the necessary data for analysis');
+    let predictionsData: any = null;
+    const fallbackPredictionsData = {
+      predictions: {
+        percent: { home: "N/A", draw: "N/A", away: "N/A" },
+        advice: "No prediction available"
+      },
+      teams: {
+        home: { league: { form: "N/A", goals: { for: { average: { total: "N/A" } }, against: { average: { total: "N/A" } } } } },
+        away: { league: { form: "N/A", goals: { for: { average: { total: "N/A" } }, against: { average: { total: "N/A" } } } } }
+      }
+    };
+    
+    try {
+      const fetchedPredictions = await getPredictionsForFixture(fixtureId);
+      predictionsData = fetchedPredictions || fallbackPredictionsData;
+      if (predictionsData && predictionsData.predictions) {
+        console.log(`✅ Successfully retrieved prediction data`);
+      } else {
+        console.warn(`⚠️ No prediction data available for fixture ${fixtureId}`);
+        predictionsData = fallbackPredictionsData;
+      }
+    } catch (error) {
+      console.error(`⚠️ API-Football Error: Failed to get prediction data:`, error);
+      // Don't throw, use fallback
+      predictionsData = fallbackPredictionsData;
     }
 
     // Build prompt for OpenAI
@@ -55,36 +128,78 @@ export async function generatePrediction(fixtureId: number): Promise<string | nu
     
     // Send request to OpenAI
     console.log("Sending request to OpenAI...");
-    const aiResponse = await callOpenAI(prompt);
+    let aiResponse;
+    try {
+      aiResponse = await callOpenAI(prompt);
+      console.log(`✅ Successfully received OpenAI response (${aiResponse.length} characters)`);
+    } catch (error) {
+      console.error(`❌ OpenAI Error:`, error);
+      throw new Error(`Failed to get OpenAI prediction: ${error instanceof Error ? error.message : String(error)}`);
+    }
     
     // Parse response
     console.log("Processing OpenAI response...");
-    const parsedResponse = parseOpenAIResponse(aiResponse);
+    let parsedResponse;
+    try {
+      parsedResponse = parseOpenAIResponse(aiResponse);
+      
+      // Validate that we have at least the basic prediction
+      if (!parsedResponse.chain_of_thought || !parsedResponse.final_prediction) {
+        console.warn(`⚠️ OpenAI response did not contain all required sections`);
+        // Enhance with basic fallback data if needed
+        if (!parsedResponse.chain_of_thought) {
+          parsedResponse.chain_of_thought = `Analysis for ${fixtureData.teams.home.name} vs ${fixtureData.teams.away.name} could not be generated. Please check the fixture details and try again.`;
+        }
+        if (!parsedResponse.final_prediction) {
+          parsedResponse.final_prediction = `Prediction for ${fixtureData.teams.home.name} vs ${fixtureData.teams.away.name} could not be generated.`;
+        }
+        if (parsedResponse.value_bets.length === 0) {
+          parsedResponse.value_bets = [
+            { market: "No value bet available", odds: 0, confidence: 0 }
+          ];
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Error parsing OpenAI response:`, error);
+      throw new Error(`Failed to parse AI response: ${error instanceof Error ? error.message : String(error)}`);
+    }
     
     // Save result to Supabase
     console.log("Saving prediction to database...");
-    const { data, error } = await supabase
-      .from('ai_predictions')
-      .insert({
-        fixture_id: fixtureId,
-        type: "pre-match",
-        chain_of_thought: parsedResponse.chain_of_thought,
-        final_prediction: parsedResponse.final_prediction,
-        value_bets_json: JSON.stringify(parsedResponse.value_bets),
-        model_version: process.env.OPENAI_API_MODEL || "o4-mini",
-        generated_at: new Date().toISOString(),
-      })
-      .select();
-    
-    if (error) {
-      throw new Error(`Error saving to Supabase: ${error.message}`);
+    try {
+      const { data, error } = await supabase
+        .from('ai_predictions')
+        .insert({
+          fixture_id: fixtureId,
+          type: "pre-match",
+          chain_of_thought: parsedResponse.chain_of_thought,
+          final_prediction: parsedResponse.final_prediction,
+          value_bets_json: JSON.stringify(parsedResponse.value_bets),
+          model_version: process.env.OPENAI_API_MODEL || "o4-mini",
+          generated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+      
+      if (error) {
+        throw new Error(`Error saving to Supabase: ${error.message}`);
+      }
+      
+      // Validate that data exists and has the expected format
+      if (!data || !data.id) {
+        throw new Error('Supabase returned no data or missing ID after insert');
+      }
+      
+      console.log(`✅ Prediction successfully saved with ID: ${data.id}`);
+      console.log(`✅ Inserted prediction for fixture: ${fixtureId}`);
+      return data.id;
+    } catch (error) {
+      console.error(`❌ Supabase Error:`, error);
+      throw new Error(`Failed to save prediction to database: ${error instanceof Error ? error.message : String(error)}`);
     }
     
-    console.log(`Prediction successfully saved with ID: ${data[0].id}`);
-    return data[0].id;
-    
   } catch (error) {
-    console.error('Error generating prediction:', error);
+    console.error('❌ Error generating prediction:', error);
     return null;
   }
 }
@@ -229,6 +344,8 @@ async function callOpenAI(prompt: string): Promise<string> {
     throw new Error('OPENAI_API_KEY not found in environment variables');
   }
   
+  console.log(`Using OpenAI model: ${model}`);
+  
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -256,6 +373,7 @@ async function callOpenAI(prompt: string): Promise<string> {
     
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('OpenAI API Error Response:', errorText);
       throw new Error(`OpenAI API Error: ${response.status} ${errorText}`);
     }
     
@@ -263,6 +381,7 @@ async function callOpenAI(prompt: string): Promise<string> {
     return data.choices[0].message.content;
     
   } catch (error) {
+    console.error('Error details:', error);
     throw new Error(`Error contacting OpenAI: ${error}`);
   }
 }
@@ -273,6 +392,9 @@ async function callOpenAI(prompt: string): Promise<string> {
  * @returns Structured result
  */
 function parseOpenAIResponse(response: string): PredictionResult {
+  // Log the full response for debugging
+  console.log('Parsing OpenAI response...');
+  
   // Split the response into parts by keywords
   const chainRegex = /CHAIN OF THOUGHT:([\s\S]*?)(?=FINAL PREDICTION:|$)/i;
   const finalRegex = /FINAL PREDICTION:([\s\S]*?)(?=VALUE BETS:|$)/i;
@@ -314,11 +436,42 @@ function parseOpenAIResponse(response: string): PredictionResult {
     }
   }
   
+  // Log parsing results
+  console.log(`Parsed ${valueBets.length} value bets`);
+  
   return {
     chain_of_thought: chainOfThought,
     final_prediction: finalPrediction,
     value_bets: valueBets
   };
+}
+
+// Функция для обработки аргументов командной строки
+export async function runWithArgs(): Promise<void> {
+  // Проверяем, есть ли аргументы
+  if (process.argv.length < 3) {
+    console.log('Usage: ts-node generatePrediction.ts <fixtureId>');
+    process.exit(1);
+  }
+  
+  // Получаем ID матча из аргументов
+  const fixtureId = parseInt(process.argv[2], 10);
+  
+  if (isNaN(fixtureId)) {
+    console.error('Error: fixtureId must be a number');
+    process.exit(1);
+  }
+  
+  console.log('Starting prediction generation...');
+  const result = await generatePrediction(fixtureId);
+  
+  if (result) {
+    console.log(`Prediction successfully generated and saved with ID: ${result}`);
+    process.exit(0);
+  } else {
+    console.error('Failed to generate prediction');
+    process.exit(1);
+  }
 }
 
 /**
@@ -347,7 +500,12 @@ async function main() {
 
 // Run script if called directly
 if (require.main === module) {
-  main();
+  // Если переданы аргументы, используем их
+  if (process.argv.length > 2) {
+    runWithArgs();
+  } else {
+    main();
+  }
 }
 
-export default generatePrediction; 
+export default generatePrediction;

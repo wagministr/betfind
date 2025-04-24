@@ -5,9 +5,14 @@
  * and generates missing predictions using OpenAI
  */
 
-import { getUpcomingFixtures } from '@/lib/apiFootball';
-import { supabase } from '@/utils/supabase';
+// Load environment variables from .env file
+import 'dotenv/config';
+
+// Заменяем импорты с алиасом @ на относительные пути
+import { getUpcomingFixtures, Fixture } from '../src/lib/apiFootball';
+import { supabase } from '../src/utils/supabase';
 import generatePrediction from './generatePrediction';
+import { validateEnvOrExit } from '../src/utils/envCheck';
 
 /**
  * Main function for generating predictions for all matches
@@ -26,6 +31,9 @@ export async function generateAllPredictions(): Promise<{
   };
 
   try {
+    // Validate environment variables
+    validateEnvOrExit();
+    
     // Get all upcoming matches from Premier League and La Liga
     console.log('Getting list of upcoming matches...');
     const fixtures = await getUpcomingFixtures([39, 140], 3);
@@ -51,11 +59,11 @@ export async function generateAllPredictions(): Promise<{
     }
     
     // Create a set of match IDs that already have predictions
-    const existingFixtureIds = new Set(existingPredictions?.map(p => p.fixture_id) || []);
+    const existingFixtureIds = new Set(existingPredictions?.map((p: { fixture_id: number }) => p.fixture_id) || []);
     console.log(`Found ${existingFixtureIds.size} existing predictions`);
     
     // Filter matches that don't have predictions yet
-    const fixturesNeedingPredictions = fixtures.filter(f => !existingFixtureIds.has(f.fixture.id));
+    const fixturesNeedingPredictions = fixtures.filter((f: Fixture) => !existingFixtureIds.has(f.fixture.id));
     console.log(`Need to generate ${fixturesNeedingPredictions.length} new predictions`);
     
     // Generate predictions with pauses between requests
@@ -93,9 +101,11 @@ export async function generateAllPredictions(): Promise<{
     
     return summary;
     
-  } catch (error) {
-    console.error('Error generating predictions:', error);
-    throw error;
+  } catch (err) {
+    console.error('Error generating predictions:', err);
+    // Приводим тип ошибки к Error или используем строку сообщения
+    const error = err as Error;
+    throw new Error(`Failed to generate predictions: ${error.message}`);
   }
 }
 
@@ -123,4 +133,4 @@ async function main() {
 // Run script if called directly
 if (require.main === module) {
   main();
-} 
+}
