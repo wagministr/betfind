@@ -344,51 +344,54 @@ export default function AIPage() {
             });
             
             if (!res.ok) {
-              const errorData = await res.json();
-              throw new Error(`API Error: ${errorData.error || res.statusText}`);
-            }
-            
-            const apiResult = await res.json();
-            console.log('Prediction API result:', apiResult);
-            
-            if (apiResult.success) {
-              // If API successfully generated prediction, reload it from database
-              const { data: newPrediction, error: fetchError } = await supabase
-                .from('ai_predictions')
-                .select('*')
-                .eq('fixture_id', bet.fixture_id)
-                .eq('type', 'pre-match')
-                .order('generated_at', { ascending: false })
-                .limit(1);
-                
-              if (fetchError) {
-                throw fetchError;
-              }
+              const errorData = await res.json().catch(() => ({ error: res.statusText }));
+              console.error('API Error:', errorData);
               
-              if (newPrediction && newPrediction.length > 0) {
-                // Use new prediction
-                setCurrentPrediction(newPrediction[0]);
-                setDisplayedText(newPrediction[0].chain_of_thought);
-                setFinalPrediction(newPrediction[0].final_prediction);
-                
-                // Parse value bets
-                try {
-                  const parsedBets = JSON.parse(newPrediction[0].value_bets_json);
-                  setValueBets(parsedBets);
-                } catch (e) {
-                  console.error('Error parsing value bets:', e);
-                  setValueBets([]);
+              // Handle 404 (Fixture not found) differently
+              if (res.status === 404) {
+                console.log('Fixture not found in API-Football, creating fallback mock');
+                // Continue execution to the fallback mock code
+              } else {
+                throw new Error(`API Error: ${errorData.error || 'Failed to generate prediction'}`);
+              }
+            } else {
+              const apiResult = await res.json();
+              console.log('Prediction API result:', apiResult);
+              
+              if (apiResult.success) {
+                // If API successfully generated prediction, reload it from database
+                const { data: newPrediction, error: fetchError } = await supabase
+                  .from('ai_predictions')
+                  .select('*')
+                  .eq('fixture_id', bet.fixture_id)
+                  .eq('type', 'pre-match')
+                  .order('generated_at', { ascending: false })
+                  .limit(1);
+                  
+                if (fetchError) {
+                  throw fetchError;
                 }
                 
-                setLoadingPrediction(false);
-                return;
+                if (newPrediction && newPrediction.length > 0) {
+                  // Use new prediction
+                  setCurrentPrediction(newPrediction[0]);
+                  setDisplayedText(newPrediction[0].chain_of_thought);
+                  setFinalPrediction(newPrediction[0].final_prediction);
+                  
+                  // Parse value bets
+                  try {
+                    const parsedBets = JSON.parse(newPrediction[0].value_bets_json);
+                    setValueBets(parsedBets);
+                  } catch (e) {
+                    console.error('Error parsing value bets:', e);
+                    setValueBets([]);
+                  }
+                  
+                  setLoadingPrediction(false);
+                  return;
+                }
               }
             }
-            
-            // If API generation failed or no prediction found in database, create a mock one
-            console.log('API generation attempted but still no prediction, creating fallback mock');
-            throw new Error('No prediction available after API generation');
-            
           } catch (apiError) {
             console.error('Error with API prediction generation:', apiError);
             console.log('Using fallback mock prediction instead');

@@ -455,14 +455,14 @@ export async function getFixtureById(fixtureId: number): Promise<Fixture | null>
       id: fixtureId.toString()
     };
     
-    const response = await apiFootballGet<ApiFootballResponse<Fixture[]>>('fixtures', params);
+    const response = await apiFootballGet<Fixture[]>('fixtures', params);
     
-    if (response.response.length === 0) {
+    if (!response || response.length === 0) {
       console.warn(`No fixture found with ID: ${fixtureId}`);
       return null;
     }
     
-    return response.response[0];
+    return response[0];
   } catch (error) {
     console.error(`Error fetching fixture with ID ${fixtureId}:`, error);
     return null;

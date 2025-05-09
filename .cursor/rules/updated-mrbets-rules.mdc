@@ -1,0 +1,237 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 🧠 Cursor Rules for betfind/MrBets.ai — 2025-04-29
+
+You are an expert developer in both frontend and backend technologies, including TypeScript, Node.js, Next.js 14 App Router, React, Supabase, Python, FastAPI, Redis, Docker, and OpenAI integrations.
+
+---
+
+## 🧠 Project State & Transition
+
+- **Repository Name**: betfind (GitHub repository) with MrBets.ai branding
+- **Current State**: Next.js frontend deployed on Vercel with minimal backend via serverless functions
+- **Transition**: Moving to a monorepo with dedicated FastAPI backend on VPS
+- **Working Components**: 
+  - ✅ API-Football integration
+  - ✅ OpenAI API for predictions
+  - ✅ Supabase for data storage
+  - ✅ Next.js frontend
+- **Planned/In-Progress Components**: 
+  - ⏳ FastAPI backend
+  - ⏳ Redis queues
+  - ⏳ Data fetchers (BeautifulSoup, Whisper, etc.)
+  - ⏳ Vector embeddings with Pinecone
+
+---
+
+## 🏗️ Planned Repository Structure
+
+```
+betfind/
+├── frontend/            # Current Next.js project
+│   ├── src/             # Move existing files from src/ here
+│   ├── public/          # Static files (already here)
+│   ├── package.json     # Frontend dependencies
+│   └── ...              # Other Next.js files
+│
+├── backend/             # New FastAPI backend
+│   ├── app/             # Main FastAPI code
+│   │   ├── main.py      # FastAPI entry point
+│   │   ├── routers/     # API routes
+│   │   └── models/      # Data schemas
+│   ├── jobs/            # Scripts for cron tasks
+│   │   ├── scan_fixtures.py
+│   │   └── worker.py
+│   ├── fetchers/        # Data collection microservices
+│   ├── processors/      # Data processors
+│   ├── requirements.txt
+│   └── Dockerfile
+│
+├── docker-compose.yml   # For running the entire system
+├── .github/             # GitHub Actions
+└── BACKEND.md           # Backend documentation
+```
+
+---
+
+## 🧠 Platform & Environment Notes
+
+- The project is developed on **Windows 11** using **PowerShell** as primary terminal
+- Transitioning to include **WSL 2** for Docker compatibility
+- The repository is being restructured as a **monorepo** with separate frontend and backend components
+- Frontend uses Next.js and is deployed on Vercel
+- Backend will use FastAPI and will be deployed on a VPS
+- Current scripts are executed with:
+  ```powershell
+  npx ts-node .\scripts\generatePrediction.ts
+  ```
+- Future backend scripts will be executed with:
+  ```bash
+  python -m jobs.scan_fixtures
+  ```
+
+---
+
+## 🧩 Current API & AI Integrations
+
+- External data is currently aggregated from:
+  - ✅ API-Football (live fixtures, odds, team stats, predictions)
+  - ✅ OpenAI API (currently using o4-mini for reasoning)
+  - ⏳ [Planned] BeautifulSoup + Requests (scraping news sites)
+  - ⏳ [Planned] DeepL API (translation services)
+  - ⏳ [Planned] Pinecone (vector database for similarity search)
+  - ⏳ [Planned] Whisper (audio transcription for YouTube videos)
+  - ⏳ [Planned] Twitter/Telegram API integrations
+
+- All integrations must use **rate-limiting awareness, error handling**, and fallback logic
+- OpenAI prompts must follow a strict reasoning structure:
+  ```
+  CHAIN OF THOUGHT:
+  <Detailed analysis>
+
+  FINAL PREDICTION:
+  <Short summary>
+
+  VALUE BETS:
+  Market: ...
+  Odds: ...
+  Confidence: ...%
+
+  Market: ...
+  Odds: ...
+  Confidence: ...%
+
+  Market: ...
+  Odds: ...
+  Confidence: ...%
+  ```
+
+---
+
+## 🧬 Supabase Integration
+
+- This project uses **Supabase MCP** in conjunction with Cursor
+- Current tables:
+  - `fixtures` — match data updated via cron
+  - `ai_predictions` — contains OpenAI reasoning results
+- All IDs must be cast to correct type (`Number(fixtureId)`), Supabase columns are typed strictly
+- The `value_bets_json` column is a stringified array of value bets
+
+---
+
+## 🧩 Current Automation & Cron
+
+- Reasoning is pre-generated using scheduled scripts via Vercel cron (at `/api/cron/daily-update`)
+- Authentication on production cron jobs is handled via `CRON_SECRET`
+- Scripts in `/scripts/` must:
+  - Be platform-agnostic (PowerShell-compatible)
+  - Include proper logging, summary output
+  - Avoid using bash syntax like `&&` or `$()`
+
+---
+
+## 🏗️ Planned Backend Architecture (FastAPI)
+
+- **Data Flow**: Will follow this pipeline:
+  1. Scheduler identifies upcoming matches
+  2. Fetchers collect data from various sources
+  3. Processors clean, translate, and vectorize data
+  4. Retriever finds relevant information
+  5. LLM Reasoner generates analysis and predictions
+  6. Result Writer stores predictions for frontend access
+
+- **Technologies**:
+  - FastAPI for web framework
+  - Redis for message queues
+  - Docker for containerization
+  - Pinecone for vector search
+  - OpenAI for embeddings and reasoning
+
+---
+
+## 🛠️ Frontend Best Practices
+
+- Avoid using `use client` unless absolutely necessary (e.g. modal animations)
+- Frontend must fallback to "AI prediction is being prepared..." **only if** `data.length === 0`
+- Do not trigger AI generation in client — it's **strictly a backend process**
+- Ensure `/ai` page remains fully usable without JavaScript enabled for SEO previews
+- All scripts must write logs either to Supabase or Vercel logs for traceability
+- When fetching predictions, match using `.eq('fixture_id', Number(fixtureId))`
+- Use `.select('*').single()` instead of `.then(data => data[0])` where possible
+
+---
+
+## 🧰 Additional Best Practices (Styling, Architecture, Testing, Error Handling)
+
+### Key Principles
+- Write concise, technical responses with accurate TypeScript examples
+- Use functional, declarative programming; avoid classes
+- Prefer iteration and modularization over duplication
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError)
+- Use lowercase with dashes for directories (e.g., components/auth-wizard)
+- Favor named exports for components
+- Use the Receive an Object, Return an Object (RORO) pattern
+
+### Code Structure
+- Use the "function" keyword for pure functions; omit semicolons
+- Use TypeScript for all code; prefer interfaces over types
+- Structure files with: exported component → subcomponents → helpers → static content → types
+- Avoid unnecessary curly braces in one-line conditions
+- Use concise conditionals: `if (isTrue) doSomething()`
+
+### UI & Styling
+- Use Tailwind CSS (utility-first), Shadcn UI, and Radix UI
+- Build responsive layouts (mobile-first)
+- Use CVA (Class Variance Authority) for component variants
+- Optimize images with WebP and lazy loading
+
+### Error Handling
+- Use guard clauses and early returns
+- Avoid nesting, prefer `if (error) return`
+- Use structured error objects for AI/API failures
+
+### AI SDK Usage
+- Use Vercel AI SDK Core + UI (when needed)
+- Stream predictions, fallback if model fails
+- Always sanitize inputs and handle rate limits
+- Store API keys in `.env`
+
+### Supabase Practices
+- Use Supabase Auth, RLS, Policies, and Edge Functions properly
+- Use Genql for type-safe GraphQL queries (if needed)
+- Always log Supabase `.error` responses
+- Use Supabase local dev for tests
+
+### Server Components & Actions
+- Favor RSC and `app/` over legacy `pages/`
+- Wrap client components in `<Suspense>`
+- Use `next-safe-action` and `zod` for validation
+- Avoid using `useEffect` or `setState` unnecessarily
+
+---
+
+## 💾 Environment Variables
+
+- Current required environment variables:
+  ```
+  NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+  NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+  API_FOOTBALL_KEY=your-api-football-key
+  OPENAI_API_KEY=your-openai-key
+  CRON_SECRET=your-cron-secret
+  ```
+
+- Additional environment variables for planned backend:
+  ```
+  SUPABASE_SERVICE_KEY=your-service-key
+  REDIS_URL=redis://redis:6379/0
+  PINECONE_API_KEY=your-pinecone-key
+  DEEPL_KEY=your-deepl-key
+  ```
+
+---
+
+Make it robust. Make it scalable. Make it magical. ⚡️

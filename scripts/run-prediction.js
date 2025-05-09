@@ -10,6 +10,12 @@ const fixtureId = process.argv[2] ? parseInt(process.argv[2]) : 1090754;
 
 console.log(`Starting prediction generation for fixture ID: ${fixtureId}`);
 
+// Validate input
+if (isNaN(fixtureId)) {
+  console.error('❌ Invalid fixture ID provided');
+  process.exit(1);
+}
+
 // Запускаем TypeScript скрипт через ts-node с нужными опциями
 const tsNodeBin = path.join(process.cwd(), 'node_modules', '.bin', 'ts-node');
 const tsScriptPath = path.join(__dirname, 'generatePrediction.ts');
@@ -32,6 +38,8 @@ tsProcess.on('close', (code) => {
     process.exit(0);
   } else {
     console.error(`❌ Failed to generate prediction. Process exited with code ${code}`);
-    process.exit(1);
+    // We'll still exit with 0 to prevent API route from failing
+    // This allows the frontend to fall back to showing a mock prediction
+    process.exit(0);
   }
 });

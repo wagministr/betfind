@@ -70,12 +70,15 @@ export async function generatePrediction(fixtureId: number): Promise<string | nu
     try {
       fixtureData = await getFixtureById(fixtureId);
       if (!fixtureData) {
-        throw new Error(`Match with ID ${fixtureId} not found`);
+        console.error(`❌ Match with ID ${fixtureId} not found`);
+        // Return null instead of throwing to allow graceful fallback
+        return null;
       }
       console.log(`✅ Successfully retrieved fixture data for ${fixtureData.teams.home.name} vs ${fixtureData.teams.away.name}`);
     } catch (error) {
       console.error(`❌ API-Football Error: Failed to get fixture data:`, error);
-      throw new Error(`Failed to retrieve match data: ${error instanceof Error ? error.message : String(error)}`);
+      // Return null instead of throwing to allow graceful fallback
+      return null;
     }
 
     // Get odds
@@ -167,6 +170,40 @@ export async function generatePrediction(fixtureId: number): Promise<string | nu
     // Save result to Supabase
     console.log("Saving prediction to database...");
     try {
+      // First, check if the fixture exists in the fixtures table
+      const { data: existingFixture, error: checkError } = await supabase
+        .from('fixtures')
+        .select('*')
+        .eq('fixture_id', fixtureId)
+        .single();
+      
+      // If fixture doesn't exist, insert it first
+      if (checkError && checkError.code === 'PGRST116') {
+        console.log(`Fixture ${fixtureId} not found in database, inserting it first...`);
+        
+        const { error: insertError } = await supabase
+          .from('fixtures')
+          .insert({
+            fixture_id: fixtureData.fixture.id,
+            league_id: fixtureData.league.id,
+            home_id: fixtureData.teams.home.id,
+            away_id: fixtureData.teams.away.id,
+            utc_kickoff: fixtureData.fixture.date,
+            status: fixtureData.fixture.status.short,
+            score_home: fixtureData.goals.home,
+            score_away: fixtureData.goals.away
+          });
+          
+        if (insertError) {
+          throw new Error(`Error inserting fixture: ${insertError.message}`);
+        }
+        
+        console.log(`✅ Fixture ${fixtureId} inserted successfully`);
+      } else if (checkError) {
+        throw new Error(`Error checking fixture: ${checkError.message}`);
+      }
+      
+      // Now insert the prediction
       const { data, error } = await supabase
         .from('ai_predictions')
         .insert({
@@ -365,9 +402,7 @@ async function callOpenAI(prompt: string): Promise<string> {
             content: prompt
           }
         ],
-        temperature: 0.4,
-        top_p: 1.0,
-        max_tokens: 2048,
+        max_completion_tokens: 2048,
       }),
     });
     
