@@ -2,18 +2,32 @@
 
 # dependencies
 /node_modules
+/frontend/node_modules
 /.pnp
 .pnp.js
 
 # testing
 /coverage
+/frontend/coverage
 
 # next.js
 /.next/
+/frontend/.next/
 /out/
+/frontend/out/
 
 # production
 /build
+/frontend/build
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+/backend/venv/
+/backend/.env
 
 # misc
 .DS_Store
@@ -47,3 +61,10 @@ next-env.d.ts
 *.njsproj
 *.sln
 *.sw?
+
+# Package locks (depending on your preference)
+/frontend/package-lock.json
+/frontend/yarn.lock
+
+# Volume data
+/monitoring/data/

@@ -84,43 +84,7 @@ The project is currently in transition from a standalone Next.js application to 
 - Docker and Docker Compose - for full system development
 - WSL2 (if on Windows) - for Docker compatibility
 
-### Development Setup
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/yourusername/betfind.git
-cd betfind
-```
-
-2. **Frontend Development**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-3. **Environment Variables**
-Create a `.env.local` file in the frontend directory:
-```
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-API_FOOTBALL_KEY=your-api-football-key
-OPENAI_API_KEY=your-openai-key
-CRON_SECRET=your-cron-secret
-```
-
-4. **Backend Development (Coming Soon)**
-```bash
-# Once backend is set up
-cd backend
-python -m pip install -r requirements.txt
-python -m app.main
-```
-
-5. **Full System Development (Coming Soon)**
-```bash
-docker-compose up
-```
 
 ## Data Flow
 
