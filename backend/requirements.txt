@@ -1,32 +1,43 @@
-# Core dependencies
+# FastAPI and Web
 fastapi==0.110.0
-uvicorn==0.25.0
-redis==5.0.1
+uvicorn[standard]==0.27.0
 httpx==0.26.0
-python-dotenv==1.0.1
+python-multipart==0.0.9
+pydantic==2.6.3
+pydantic-settings==2.2.1
 
 # Database
-asyncpg==0.29.0
 supabase==2.3.1
+asyncpg==0.29.0
 
-# AI & Processing
-openai==1.12.0
+# Redis
+redis==5.0.1
+hiredis==2.3.2
+
+# Vector Storage
+pinecone-client==3.0.0
+pinecone-text==0.7.1
+
+# OpenAI and LLM
+openai==1.13.3
 tiktoken==0.6.0
-langdetect==1.0.9
-deepl==1.16.1
-python-telegram-bot==20.7
-tweepy==4.14.0
+tenacity==8.2.3
 
-# Vector Database
-pinecone-client==3.0.2
+# Processing
+python-dotenv==1.0.1
+beautifulsoup4==4.12.3
+deepl==1.17.0
 
-# Extras
-pydantic==2.6.1
-pydantic-settings==2.2.1
-loguru==0.7.2
-python-multipart==0.0.6
-beautifulsoup4==4.12.2
+# Audio Processing (for Whisper)
+yt-dlp==2023.12.30
+pydub==0.25.1
+ffmpeg-python==0.2.0
+
+# Monitoring
 prometheus-fastapi-instrumentator==6.1.0
+prometheus-client==0.19.0
+sentry-sdk==1.37.1
+
+# Testing
 pytest==7.4.3
-flake8==7.0.0
-black==24.1.1 
+pytest-asyncio==0.21.1 

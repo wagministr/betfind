@@ -56,29 +56,65 @@ class LogtailHandler(logging.Handler):
             # If logging fails, print to stderr but don't crash
             print(f"Error sending logs to Logtail: {e}", file=sys.stderr)
 
-def setup_logging(service_name=None):
+def setup_logging(name, log_level=None):
     """
-    Set up logging with console and Logtail handlers
-    """
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
+    Set up logging with proper format and level
     
-    # Always add a console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    ))
-    root_logger.addHandler(console_handler)
-    
-    # Add Logtail handler if token exists
-    if LOGTAIL_TOKEN:
-        logtail_handler = LogtailHandler(LOGTAIL_TOKEN)
-        if service_name:
-            logtail_handler.service_name = service_name
-        logtail_handler.setFormatter(logging.Formatter('%(message)s'))
-        root_logger.addHandler(logtail_handler)
+    Args:
+        name: Logger name
+        log_level: Logging level (defaults to INFO or from environment)
         
-    return root_logger
+    Returns:
+        Configured logger instance
+    """
+    if log_level is None:
+        log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
+    
+    numeric_level = getattr(logging, log_level, logging.INFO)
+    
+    # Create a custom logger
+    logger = logging.getLogger(name)
+    logger.setLevel(numeric_level)
+    
+    # Check if handlers already exist (avoid duplicate handlers during reloads)
+    if not logger.handlers:
+        # Create handlers
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(numeric_level)
+        
+        # Create formatters
+        formatter = logging.Formatter(
+            '%(asctime)s | %(levelname)8s | %(name)s | %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        
+        # Add formatters to handlers
+        console_handler.setFormatter(formatter)
+        
+        # Add handlers to the logger
+        logger.addHandler(console_handler)
+    
+    # Setup a file handler if in production
+    if os.environ.get("ENVIRONMENT") == "production" and not any(isinstance(h, logging.FileHandler) for h in logger.handlers):
+        try:
+            log_dir = os.environ.get("LOG_DIR", "/app/logs")
+            os.makedirs(log_dir, exist_ok=True)
+            
+            today = datetime.now().strftime("%Y-%m-%d")
+            file_handler = logging.FileHandler(f"{log_dir}/{name}-{today}.log")
+            file_handler.setLevel(numeric_level)
+            
+            file_formatter = logging.Formatter(
+                '%(asctime)s | %(levelname)8s | %(name)s | %(filename)s:%(lineno)d | %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+            file_handler.setFormatter(file_formatter)
+            
+            logger.addHandler(file_handler)
+        except Exception as e:
+            logger.error(f"Failed to setup file logging: {e}")
+    
+    return logger
 
 # Usage example:
 # logger = setup_logging("backend-worker")
