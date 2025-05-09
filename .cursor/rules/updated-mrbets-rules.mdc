@@ -27,6 +27,29 @@ You are an expert developer in both frontend and backend technologies, including
 
 ---
 
+## 📋 Documentation Rules
+
+- **CONTEXT.md**: This is the project's historical record and should be treated as an append-only log
+  - ✅ **Never delete** existing content from CONTEXT.md
+  - ✅ **Only append** new sections at the end of the file
+  - ✅ Each new entry should start with a date header: `## 📝 Update: YYYY-MM-DD - [Title]`
+  - ✅ Logs should document major architectural changes, new integrations, or refactorings
+  - ✅ Include relevant technical details to help future developers understand project evolution
+  - ✅ Maintain the same formatting style as existing content
+  - ✅ Example:
+    ```markdown
+    ## 📝 Update: 2025-05-01 - Backend Migration to FastAPI
+    
+    Completed the transition to a monorepo architecture with a dedicated FastAPI backend:
+    
+    - Created basic FastAPI app structure with routers and models
+    - Implemented Redis-based job queue system
+    - Added fixture data fetchers and processors
+    - Set up Docker-based development environment
+    ```
+
+---
+
 ## 🏗️ Planned Repository Structure
 
 ```

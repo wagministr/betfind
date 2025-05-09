@@ -1,38 +1,35 @@
 {
-  "name": "betfind",
+  "name": "betfind-monorepo",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "postbuild": "node scripts/build-for-vercel.js",
-    "start": "next start",
-    "lint": "next lint",
-    "update-fixtures": "node scripts/run-update.js",
-    "generate-predictions": "node scripts/run-all-predictions.js",
-    "cron:daily-update": "npm run update-fixtures && npm run generate-predictions"
+    "dev": "npm run dev:frontend",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && uvicorn app.main:app --reload",
+    "dev:all": "docker-compose up",
+    "build": "npm run build:frontend",
+    "build:frontend": "cd frontend && npm run build",
+    "start": "npm run start:frontend",
+    "start:frontend": "cd frontend && npm run start",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install:all": "npm run install:frontend && npm run install:backend",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && pip install -r requirements.txt"
   },
-  "dependencies": {
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
-    "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.49.4",
-    "dotenv": "^16.5.0",
-    "next": "15.3.0",
-    "node-fetch": "^2.7.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5",
-    "tsconfig-paths": "^4.2.0"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/betfind.git"
   },
+  "keywords": [
+    "monorepo",
+    "nextjs",
+    "fastapi",
+    "ai",
+    "sports"
+  ],
+  "author": "MrBets Team",
+  "license": "MIT",
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.0",
-    "tailwindcss": "^4"
+    "concurrently": "^8.2.2"
   }
 }
