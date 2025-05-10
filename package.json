@@ -228,7 +228,7 @@
     "cliui": "^8.0.1",
     "prelude-ls": "^1.2.1",
     "es-abstract": "^1.23.9",
-    "react-dom": "^19.1.0",
+    "react-dom": "^18.3.1",
     "find-up": "^5.0.0",
     "sharp": "^0.34.1",
     "styled-jsx": "^5.1.6",
