@@ -26,7 +26,8 @@
     "backend:install": "pip install -r backend/requirements.txt",
     "backend:dev": "cd backend && uvicorn app.main:app --reload",
     "check-monorepo": "bash ./scripts/check-monorepo.sh",
-    "postinstall": "npm run check-monorepo"
+    "postinstall": "npm run check-monorepo",
+    "security:check": "npm audit && cd frontend && npm audit"
   },
   "keywords": [
     "ai",

@@ -189,6 +189,54 @@ npm run cron:daily-update
 - [docs/vercel-deployment.md](docs/vercel-deployment.md) - Vercel deployment guide
 - [docs/automated-prediction-system.md](docs/automated-prediction-system.md) - Prediction system details
 
+## Security & Dependency Management
+
+This project uses several tools to maintain dependency security and keep packages up-to-date:
+
+### GitHub Dependabot
+
+We use GitHub Dependabot for automated dependency updates. The configuration in `.github/dependabot.yml` handles:
+
+- Weekly checks for npm packages (root and frontend)
+- Weekly checks for Python packages (backend)
+- Monthly checks for GitHub Actions
+
+Dependabot creates pull requests automatically when updates are available, focusing on minor and patch versions to avoid breaking changes.
+
+### Security Scanning
+
+Our security workflow in `.github/workflows/security-check.yml` runs:
+
+- `npm audit` on all Node.js dependencies
+- `safety check` on Python dependencies
+- TruffleHog for secret scanning to prevent credential leaks
+- GitHub's Dependency Review on all pull requests
+
+Run security checks locally:
+
+```bash
+# Check all dependencies
+npm run security:check
+
+# Check just backend dependencies
+cd backend && python -m safety check -r requirements.txt
+```
+
+### Manual Dependency Updates
+
+For manual updates, follow these steps:
+
+```bash
+# Update frontend dependencies
+cd frontend && npm update
+
+# Update backend dependencies (with pip-tools)
+cd backend
+pip install pip-tools
+pip-compile --upgrade requirements.in
+pip-compile --upgrade requirements-dev.in
+```
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
