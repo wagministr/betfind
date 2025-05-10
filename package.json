@@ -105,7 +105,7 @@
     "array-includes": "^3.1.8",
     "simple-swizzle": "^0.2.2",
     "eslint-plugin-jsx-a11y": "^6.10.2",
-    "spawn-command": "^0.0.2",
+    "spawn-command": "^0.0.3",
     "object.entries": "^1.1.9",
     "language-subtag-registry": "^0.3.23",
     "safe-regex-test": "^1.1.0",
