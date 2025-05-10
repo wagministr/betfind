@@ -1,0 +1,12 @@
+{
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/.next",
+  "installCommand": "cd frontend && npm install",
+  "devCommand": "cd frontend && npm run dev",
+  "crons": [
+    {
+      "path": "/api/cron/daily-update",
+      "schedule": "0 4 * * *"
+    }
+  ]
+} 

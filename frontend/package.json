@@ -5,44 +5,31 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "postbuild": "node ./scripts/build-for-vercel.js",
     "start": "next start",
     "lint": "next lint",
-    "update-fixtures": "node ./scripts/run-update.js",
-    "generate-predictions": "node ./scripts/run-all-predictions.js",
-    "cron:daily-update": "npm run update-fixtures && npm run generate-predictions"
+    "update-fixtures": "npx ts-node scripts/updateFixtures.ts",
+    "generate-predictions": "npx ts-node scripts/generatePrediction.ts",
+    "cron:daily-update": "node scripts/run-daily-update.js"
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.0.5",
-    "@radix-ui/react-slot": "^1.0.2",
     "@supabase/auth-helpers-nextjs": "^0.8.7",
-    "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.38.4",
-    "@vercel/analytics": "^1.1.1",
-    "ai": "^2.2.27",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.0.0",
-    "dotenv": "^16.5.0",
-    "lucide-react": "^0.293.0",
+    "@supabase/supabase-js": "^2.39.0",
     "next": "14.0.3",
-    "node-fetch": "^2.7.0",
-    "react": "^18",
-    "react-dom": "^18",
-    "tailwind-merge": "^2.0.0",
-    "tailwindcss-animate": "^1.0.7",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0"
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "autoprefixer": "^10.0.1",
-    "eslint": "^8",
+    "@types/node": "20.4.5",
+    "@types/react": "18.2.18",
+    "@types/react-dom": "18.2.7",
+    "autoprefixer": "10.4.14",
+    "eslint": "8.46.0",
     "eslint-config-next": "14.0.3",
-    "postcss": "^8",
-    "tailwindcss": "^3.3.0",
-    "typescript": "^5"
+    "postcss": "8.4.27",
+    "tailwindcss": "3.3.3",
+    "typescript": "5.1.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
-} 
+}
