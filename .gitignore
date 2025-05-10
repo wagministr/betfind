@@ -97,3 +97,4 @@ dump.rdb
 *~
 *.bak
 *.tmp
+*:Zone.Identifier
