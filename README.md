@@ -37,6 +37,7 @@ betfind/
 │   └── Dockerfile
 │
 ├── docker-compose.yml   # For running the entire system
+├── package.json         # Root package.json for monorepo management
 ├── .github/             # GitHub Actions
 └── BACKEND.md           # Backend documentation
 ```
@@ -84,7 +85,79 @@ The project is currently in transition from a standalone Next.js application to 
 - Docker and Docker Compose - for full system development
 - WSL2 (if on Windows) - for Docker compatibility
 
+### Installation
 
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/betfind.git
+cd betfind
+```
+
+2. Setup environment variables:
+```bash
+cp env.example .env
+# Edit .env with your API keys
+```
+
+3. Install dependencies:
+```bash
+# Install frontend dependencies
+npm install
+
+# Install backend dependencies
+npm run backend:install
+# OR directly with pip
+pip install -r backend/requirements.txt
+```
+
+### Development
+
+You can run different parts of the application using the scripts in the root package.json:
+
+```bash
+# Run only frontend
+npm run dev:frontend
+
+# Run only backend
+npm run dev:backend
+
+# Run both frontend and backend concurrently
+npm run dev:all
+
+# Build frontend
+npm run build:frontend
+
+# Start frontend production server
+npm run start:frontend
+```
+
+### Docker Development
+
+For a complete development environment including Redis and other services:
+
+```bash
+# Build and start all services
+npm run docker:build
+npm run docker:up
+
+# Stop all services
+npm run docker:down
+```
+
+### Scripts
+
+The following automation scripts are available:
+
+```bash
+# Update fixtures data
+npm run update-fixtures
+
+# Generate predictions for upcoming matches
+npm run generate-predictions
+
+# Run the daily update cron job
+npm run cron:daily-update
+```
 
 ## Data Flow
 

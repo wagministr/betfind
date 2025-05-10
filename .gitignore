@@ -28,6 +28,13 @@ __pycache__/
 .Python
 /backend/venv/
 /backend/.env
+/backend/.venv/
+/backend/*.egg-info/
+/backend/dist/
+/backend/.pytest_cache/
+/backend/.coverage
+/backend/htmlcov/
+.pytest_cache/
 
 # misc
 .DS_Store
@@ -68,3 +75,25 @@ next-env.d.ts
 
 # Volume data
 /monitoring/data/
+
+# Logs
+/logs
+*.log
+
+# Docker
+.docker/
+
+# FastAPI
+/backend/.ruff_cache/
+
+# Redis
+dump.rdb
+
+# Jupyter
+.ipynb_checkpoints
+
+# Temporary files
+*.swp
+*~
+*.bak
+*.tmp

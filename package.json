@@ -1,38 +1,49 @@
 {
   "name": "betfind",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "postbuild": "node scripts/build-for-vercel.js",
-    "start": "next start",
-    "lint": "next lint",
-    "update-fixtures": "node scripts/run-update.js",
-    "generate-predictions": "node scripts/run-all-predictions.js",
-    "cron:daily-update": "npm run update-fixtures && npm run generate-predictions"
+  "description": "MrBets.ai - AI-powered sports prediction platform",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/betfind.git"
   },
-  "dependencies": {
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
-    "@supabase/ssr": "^0.6.1",
-    "@supabase/supabase-js": "^2.49.4",
-    "dotenv": "^16.5.0",
-    "next": "15.3.0",
-    "node-fetch": "^2.7.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "ts-node": "^10.9.2",
-    "typescript": "^5",
-    "tsconfig-paths": "^4.2.0"
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && uvicorn app.main:app --reload",
+    "dev:all": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "build:frontend": "cd frontend && npm run build",
+    "start:frontend": "cd frontend && npm run start",
+    "lint:frontend": "cd frontend && npm run lint",
+    "update-fixtures": "cd frontend && npm run update-fixtures",
+    "generate-predictions": "cd frontend && npm run generate-predictions",
+    "cron:daily-update": "cd frontend && npm run cron:daily-update",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "backend:install": "pip install -r backend/requirements.txt",
+    "backend:dev": "cd backend && uvicorn app.main:app --reload",
+    "check-monorepo": "bash ./scripts/check-monorepo.sh",
+    "postinstall": "npm run check-monorepo"
+  },
+  "keywords": [
+    "ai",
+    "sports",
+    "predictions",
+    "betting",
+    "nextjs",
+    "fastapi",
+    "supabase",
+    "monorepo"
+  ],
+  "author": "MrBets.ai Team",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.3.0",
-    "tailwindcss": "^4"
+    "concurrently": "^8.2.2"
   }
-}
+} 
