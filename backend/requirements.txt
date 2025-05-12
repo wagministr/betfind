@@ -7,7 +7,7 @@ pydantic>=2.6.3,<2.7.0
 pydantic-settings>=2.2.1,<2.3.0
 
 # Database
-supabase>=2.3.0,<2.4.0
+supabase>=2.3.0,<2.16.0
 asyncpg>=0.29.0,<0.30.0
 
 # Queue
