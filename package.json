@@ -208,7 +208,7 @@
     "stable-hash": "^0.0.5",
     "has-flag": "^4.0.0",
     "path-parse": "^1.0.7",
-    "react": "^19.1.0",
+    "react": "^18.3.1",
     "array.prototype.findlastindex": "^1.2.6",
     "function-bind": "^1.1.2",
     "array-buffer-byte-length": "^1.0.2",
